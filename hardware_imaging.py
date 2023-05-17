@@ -14,7 +14,9 @@ Author: Noah Stieler, 2023
 
 import time
 
+
 # TODO query the sweep time and set timeout accordingly
+
 class VNA:
     """Commands follow the SCPI specification"""
 
@@ -22,7 +24,7 @@ class VNA:
         self.resource = resource
         self.name = ""
 
-        self.data_point_count = 10
+        self.data_point_count = 5
         self.if_bandwidth = 5 * 1000  # Hz
         self.freq_start = 8 * 1000000000  # Hz
         self.freq_stop = 16 * 1000000000  # Hz
@@ -61,7 +63,7 @@ class VNA:
         # This is from the old software but the manual has a different syntax
         self.write(f'SOURCE1:POWER1 {self.power}DBM')
 
-        self.resource.timeout = 100 * 1000 #time in milliseconds
+        self.resource.timeout = 100 * 1000  # time in milliseconds
 
     def display_on(self, setting):
         """Old software said VNA runs faster with display off,
@@ -88,11 +90,11 @@ class VNA:
 
     def _freq_list_linspace(self):
         """Returns a list of the frequencies the VNA is sampling at."""
-        list = []
+        list_out = []
         inc = (self.freq_stop - self.freq_start) / (self.data_point_count - 1)
         for i in range(self.data_point_count):
-            list.append(self.freq_start + i * inc)
-        return list
+            list_out.append(self.freq_start + i * inc)
+        return list_out
 
 
 class Switches:
@@ -112,11 +114,17 @@ class Switches:
 
     def set_tran(self, port):
         """Port indices are 1-24 inclusive"""
+        if port < Switches.PORT_MIN or port > Switches.PORT_MAX:
+            raise SwitchInvalidPortException(port)
+
         self.write(f'tran_{Switches.pad_port_number(port)};')
         time.sleep(Switches.debounce_time)
 
     def set_refl(self, port):
         """Port indices are 1-24 inclusive"""
+        if port < Switches.PORT_MIN or port > Switches.PORT_MAX:
+            raise SwitchInvalidPortException(port)
+
         self.write(f'refl_{Switches.pad_port_number(port)}')
         time.sleep(Switches.debounce_time)
 
@@ -131,3 +139,15 @@ class Switches:
             return '0' + str(port)
         else:
             return str(port)
+
+
+class SwitchInvalidPortException(Exception):
+    """Raised when attempting to set the switch port outside
+    the allowed range."""
+
+    def __init__(self, attempted_port):
+        self.attempted_port = attempted_port
+
+    def display_message(self):
+        print(f'SwtichInvalidPortException:'
+              f'\n\tPort {self.attempted_port} is invalid.')
