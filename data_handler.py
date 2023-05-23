@@ -50,6 +50,7 @@ def format_meta_data(vna, posx=0, posy=0, scan_index=0):
     be incorporated into JSON format"""
     out_dict = {
         'scan_index': scan_index,
+        's_parameter': vna.s_parameter,
         'freq_start': vna.freq_start,
         'freq_stop': vna.freq_stop,
         'if_bandwidth': vna.if_bandwidth,

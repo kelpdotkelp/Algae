@@ -1,19 +1,22 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-import tab_home
-import tab_hardware
+import gui.tab_home as tab_home
+import gui.tab_hardware as tab_hardware
 
 _ASPECT_RATIO = 4 / 3
 _HEIGHT = 900
 _WIDTH = int(_ASPECT_RATIO * _HEIGHT)
 
-_app_terminated = False
+app_terminated = False
 _root = None
+_tab_control = None
+
+_tab_index = 1
 
 
 def _config_base_frames(tabs, bottom_bar):
     """Configures the frames which holds the tabs and bottom menu bar."""
-    _root.rowconfigure(index=0, weight=25)
+    _root.rowconfigure(index=0, weight=10)
     _root.rowconfigure(index=1, weight=1)
     _root.columnconfigure(index=0, weight=1)
 
@@ -32,13 +35,13 @@ def _create_window():
 
     def on_closing():
         _root.destroy()
-        global _app_terminated
-        _app_terminated = True
+        global app_terminated
+        app_terminated = True
 
     _root = tk.Tk()
     _root.minsize(_WIDTH, _HEIGHT)
     _root.resizable(False, False)
-    _root.title('Gloo')
+    _root.title('Algae')
     _root.geometry(f'{_WIDTH}x{_HEIGHT}+50+50')
     _root.protocol('WM_DELETE_WINDOW', on_closing)
 
@@ -50,33 +53,24 @@ def create_gui():
     frame_bottom_bar = tk.Frame(_root, borderwidth=3, relief=tk.RAISED)
     _config_base_frames(frame_tabs, frame_bottom_bar)
 
-    tab_control = ttk.Notebook(frame_tabs)
+    global _tab_control
+    _tab_control = ttk.Notebook(frame_tabs)
 
-    frame_tab_home = tab_home.create(tab_control)
-    e_num_points = tab_home.add_parameter('Number of points')
-    e_if_bandwidth = tab_home.add_parameter('IF bandwidth (Hz)')
-    e_start_freq = tab_home.add_parameter('Start frequency (Hz)')
-    e_stop_freq = tab_home.add_parameter('Stop frequency (Hz)')
-    e_power = tab_home.add_parameter('Power (dBm)')
+    frame_tab_home = tab_home.create(_tab_control)
+    frame_tab_hardware = tab_hardware.create(_tab_control)
 
-    frame_tab_hardware = tab_hardware.create(tab_control)
-
-    tab_control.add(frame_tab_home, text='Home')
-    tab_control.add(frame_tab_hardware, text='Hardware')
-    tab_control.pack(expand=True, fill='both')
-
-    while not _app_terminated:
-        _root.update_idletasks()
-        _root.update()
-
-    # print(page_home._input_widgets['Power (dBm)'].get())
+    _tab_control.add(frame_tab_home, text='Home')
+    _tab_control.add(frame_tab_hardware, text='Hardware')
+    _tab_control.pack(expand=True, fill='both')
+    _tab_control.bind('<<NotebookTabChanged>>', _on_tab_change)
+    _tab_control.select(_tab_index)
 
 
-if __name__ == '__main__':
-    # VERY IMPORTANT
-    # This removes blur on all text.
-    from ctypes import windll
+def update():
+    _root.update_idletasks()
+    _root.update()
 
-    windll.shcore.SetProcessDpiAwareness(1)
 
-    create_gui()
+def _on_tab_change(event):
+    global _tab_index
+    _tab_index = _tab_control.index(_tab_control.select())

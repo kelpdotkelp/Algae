@@ -13,21 +13,30 @@ Author: Noah Stieler, 2023
 """
 
 import time
+from enum import Enum
 
 
 # TODO query the sweep time and set timeout accordingly
+# So far i've been measuring with S11, S21 is what we need.
 
 class VNA:
     """Commands follow the SCPI specification"""
 
+    class SParameters(str, Enum):
+        S11 = 'S11'
+        S22 = 'S22'
+        S21 = 'S21'  # Important
+        S12 = 'S12'
+
     def __init__(self, resource):
         self.resource = resource
         self.name = ""
+        self.s_parameter = VNA.SParameters.S21
 
         self.data_point_count = 5
         self.if_bandwidth = 5 * 1000  # Hz
-        self.freq_start = 8 * 1000000000  # Hz
-        self.freq_stop = 16 * 1000000000  # Hz
+        self.freq_start = 3 * 1000000000  # Hz
+        self.freq_stop = 5 * 1000000000  # Hz
         self.power = 0  # dBm
 
         self.freq_list = self._freq_list_linspace()
@@ -42,13 +51,20 @@ class VNA:
 
         self.display_on(False)
 
-        self.write('DISPLAY:WINDOW1:STATE ON')
-        self.write('CALCULATE1:PARAMETER:DEFINE \'CH1_1_S21\', S21')
-        self.write('DISPLAY:WINDOW1:TRACE1:FEED \'CH1_1_S21\'')
+        """
+            Code from previous software.
+            self.write('DISPLAY:WINDOW1:STATE ON')
+            self.write('CALCULATE1:PARAMETER:DEFINE \'CH1_1_S21\', S21')
+            self.write('DISPLAY:WINDOW1:TRACE1:FEED \'CH1_1_S21\'')
+    
+            self.write('DISPLAY:WINDOW2:STATE ON')
+            self.write('CALCULATE1:PARAMETER:DEFINE \'CH2_1_S11\', S11')
+            self.write('DISPLAY:WINDOW2:TRACE1:FEED \'CH2_1_S11\'')
+        """
 
-        self.write('DISPLAY:WINDOW2:STATE ON')
-        self.write('CALCULATE1:PARAMETER:DEFINE \'CH2_1_S11\', S11')
-        self.write('DISPLAY:WINDOW2:TRACE1:FEED \'CH2_1_S11\'')
+        # Using convention that parameter names are prefixed with 'parameter_'
+        parameter_name = 'parameter_' + self.s_parameter
+        self.write('CALCULATE1:PARAMETER:DEFINE \'' + parameter_name + '\', ' + self.s_parameter)
 
         self.write('INITIATE:CONTINUOUS OFF')
         self.write('TRIGGER:SOURCE MANUAL')
@@ -85,7 +101,8 @@ class VNA:
         # vna.send_command('*WAI') # *OPC? might be better because it stops the controller from attempting a read
         self.query('*OPC?')  # Controller waits until all commands are completed.
 
-        self.write('CALCULATE1:PARAMETER:SELECT \'CH2_1_S11\'')
+        # Using convention that parameter names are prefixed with 'parameter_'
+        self.write('CALCULATE1:PARAMETER:SELECT \'' + 'parameter_' + self.s_parameter + '\'')
         return self.query('CALCULATE:DATA? SDATA')
 
     def _freq_list_linspace(self):
