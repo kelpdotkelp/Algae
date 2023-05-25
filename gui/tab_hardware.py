@@ -1,3 +1,13 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Part of the gui.
+Sets up and handles the hardware tab.
+
+Author: Noah Stieler, 2023
+"""
+
 import tkinter as tk
 import tkinter.ttk as ttk
 

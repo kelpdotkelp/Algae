@@ -1,5 +1,5 @@
 """
-Target Positioning System
+Algae ~ Automated Target Positioning System
 Electromagnetic Imaging Lab, University of Manitoba
 
 Parses the data received from the VNA and re-formats it
@@ -12,24 +12,21 @@ Author: Noah Stieler, 2023
 from datetime import date, datetime
 
 
-def _vna_str_to_float(str_points):
-    """Converts string list of complex numbers
-    to floating point list"""
-    num_list = str_points.split(',')
-
-    for i in range(len(num_list)):
-        str = num_list[i]
-        sign = 1 if str[0] == '+' else -1
-        sign_exp = 1 if str[15] == '+' else -1
-        num_list[i] = sign * float(str[1:14]) * pow(10, sign_exp * int(str[16:19]))
-
-    return num_list
+def vna_str_to_float(string):
+    """Converts string float format used by vna to
+    a float."""
+    sign = 1 if string[0] == '+' else -1
+    sign_exp = 1 if string[15] == '+' else -1
+    return sign * float(string[1:14]) * pow(10, sign_exp * int(string[16:19]))
 
 
 def format_data_one_sweep(str_points, freq_list):
     """Returns a list that contains lists of the real and imaginary
     components at each frequency."""
-    float_points = _vna_str_to_float(str_points)
+    float_points = str_points.split(',')
+
+    for i in range(len(float_points)):
+        float_points[i] = vna_str_to_float(float_points[i])
 
     # Check to ensure no data is missing from vna
     if len(float_points) != 2 * len(freq_list):
@@ -45,12 +42,12 @@ def format_data_one_sweep(str_points, freq_list):
     return measurement_set
 
 
-def format_meta_data(vna, posx=0, posy=0, scan_index=0):
+def format_meta_data(vna, s_parameter, posx=0, posy=0, scan_index=0):
     """Returns the correctly structured dictionary that can later
     be incorporated into JSON format"""
     out_dict = {
         'scan_index': scan_index,
-        's_parameter': vna.s_parameter,
+        's_parameter': s_parameter,
         'freq_start': vna.freq_start,
         'freq_stop': vna.freq_stop,
         'if_bandwidth': vna.if_bandwidth,

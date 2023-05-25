@@ -1,7 +1,19 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Part of the gui.
+Creates window and main gui frames.
+
+Author: Noah Stieler, 2023
+"""
+
 import tkinter as tk
 import tkinter.ttk as ttk
+
 import gui.tab_home as tab_home
 import gui.tab_hardware as tab_hardware
+import gui.bottom_bar as bottom_bar
 
 _ASPECT_RATIO = 4 / 3
 _HEIGHT = 900
@@ -11,22 +23,22 @@ app_terminated = False
 _root = None
 _tab_control = None
 
-_tab_index = 1
+_tab_index = 0
 
 
-def _config_base_frames(tabs, bottom_bar):
+def _config_base_frames(tabs, frame_bottom_bar):
     """Configures the frames which holds the tabs and bottom menu bar."""
     _root.rowconfigure(index=0, weight=10)
     _root.rowconfigure(index=1, weight=1)
     _root.columnconfigure(index=0, weight=1)
 
     tabs.grid(row=0, column=0, sticky='nsew')
-    bottom_bar.grid(row=1, column=0, sticky='nsew')
+    frame_bottom_bar.grid(row=1, column=0, sticky='nsew')
 
     # Prevents grid from resize to fit widgets,
-    # i.e grid would be 0x0 if there were no widgets
+    # ie grid would be 0x0 if there were no widgets
     tabs.grid_propagate(False)
-    bottom_bar.grid_propagate(False)
+    frame_bottom_bar.grid_propagate(False)
 
 
 def _create_window():
@@ -52,6 +64,8 @@ def create_gui():
     frame_tabs = tk.Frame(_root)
     frame_bottom_bar = tk.Frame(_root, borderwidth=3, relief=tk.RAISED)
     _config_base_frames(frame_tabs, frame_bottom_bar)
+
+    bottom_bar.create(frame_bottom_bar)
 
     global _tab_control
     _tab_control = ttk.Notebook(frame_tabs)

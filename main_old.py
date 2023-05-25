@@ -1,5 +1,5 @@
 """
-Target Positioning System
+Algae ~ Automated Target Positioning System
 Electromagnetic Imaging Lab, University of Manitoba
 
 Please install:
@@ -9,7 +9,7 @@ NI-488.2    ->     https://www.ni.com/en-ca/support/downloads/drivers/download.n
 NI GPIB setup guide:
 https://knowledge.ni.com/KnowledgeArticleDetails?id=kA03q000000x2YDCAY&l=en-CA
 
-This is a previous program without any user interface which can perform full
+This is an outdated program without any user interface which can perform full
 scans individually.
 
 Author: Noah Stieler, 2023
@@ -26,12 +26,6 @@ GPIB_ADDRESS_SWITCHES = 'GPIB::15::INSTR'
 
 OUTPUT_FILE_PATH = r'.\output\test_may_23.json'
 OUTPUT_JSON_INDENT = '\t'
-
-
-# TODO Might be useful for debugging: Decorator for timing vna operations
-# TODO user input field for meta data to describe what the target is
-# TODO ability to measure and output all S-parameters
-# TODO user defined trans/refl ranges
 
 
 def main():

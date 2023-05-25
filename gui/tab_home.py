@@ -1,3 +1,15 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Part of the gui.
+Sets up and handles the home tab.
+Canvas is handled externally to enable graphics for multiple
+experiments.
+
+Author: Noah Stieler, 2023
+"""
+
 import tkinter as tk
 
 canvas = None
@@ -21,7 +33,7 @@ def _canvas_resize(event):
     canvas_size = new_size - 2 * pad
 
 
-def add_parameter(display_name):
+def add_parameter_num(display_name):
     global _parameter_count
     padding_x = 15
     padding_y = 10
@@ -32,7 +44,7 @@ def add_parameter(display_name):
     new_frame.grid(row=_parameter_count, column=0, pady=padding_y, sticky='nsew')
 
     tk.Label(new_frame, text=display_name).pack(padx=padding_x, side=tk.LEFT)
-    entry = tk.Entry(new_frame)
+    entry = tk.Entry(new_frame, justify=tk.RIGHT)
     entry.pack(padx=padding_x, side=tk.RIGHT)
 
     _parameter_count += 1

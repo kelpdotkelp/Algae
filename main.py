@@ -1,61 +1,259 @@
-import pyvisa
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Please install:
+NI-VISA     ->     https://www.ni.com/en-ca/support/downloads/drivers/download.ni-visa.html#480875
+NI-488.2    ->     https://www.ni.com/en-ca/support/downloads/drivers/download.ni-488-2.html#467646
+
+NI GPIB setup guide:
+https://knowledge.ni.com/KnowledgeArticleDetails?id=kA03q000000x2YDCAY&l=en-CA
+
+Author: Noah Stieler, 2023
+"""
+import tkinter
+import json
+import pyvisa as visa
+import time
 
 import gui
-import pyvisa as visa
+import data_handler
 from hardware_imaging import VNA, Switches
+
+state = 'idle'
+
+tran_range = (Switches.PORT_MIN, Switches.PORT_MAX)
+refl_range = (Switches.PORT_MIN, Switches.PORT_MAX)
+port_tran = tran_range[0]
+port_refl = refl_range[0]
 
 PATH_VISA_LIBRARY = r'C:\Windows\system32\visa64.dll'
 
-vna, switches = None, None
+OUTPUT_JSON_INDENT = '\t'
+output_file_path = r'.\output\may_25'
+output_file_dict = {}
+
+vna, switches = VNA(None), Switches(None)
 _e_vna, _e_switches = None, None
 
+"""
+Each key is an input parameter and the value is a list.
+0 = the widget
+1 = parameter value
+2 = parameter display name
+"""
+input_param = {}
 
-# TODO display should be turned back on after scan
-# I think VNA software crashes if you shut down while display is off.
+time_estimate_one_sweep = 0
+
+
+# TODO VisaIOError scanning for hardware after having valid hardware
+# then disconnecting USB and scanning again, need
+
+# TODO Might be useful for debugging: Decorator for timing vna operations
+# TODO user input field for meta data to describe what the target is
+# TODO user defined trans/refl ranges
 
 def main():
+    global state
+
     gui.core.create_gui()
 
-    e_num_points = gui.tab_home.add_parameter('Number of points')
-    e_if_bandwidth = gui.tab_home.add_parameter('IF bandwidth (Hz)')
-    e_start_freq = gui.tab_home.add_parameter('Start frequency (Hz)')
-    e_stop_freq = gui.tab_home.add_parameter('Stop frequency (Hz)')
-    e_power = gui.tab_home.add_parameter('Power (dBm)')
+    # Set up input parameters
+    input_param['num_points'] = [gui.tab_home.add_parameter_num('Number of points'),
+                                 0, 'Number of points']
+    input_param['ifbw'] = [gui.tab_home.add_parameter_num('IF bandwidth (Hz)'),
+                           0, 'IF bandwidth (Hz)']
+    input_param['freq_start'] = [gui.tab_home.add_parameter_num('Start frequency (Hz)'),
+                                 0, 'Start frequency (Hz)']
+    input_param['freq_stop'] = [gui.tab_home.add_parameter_num('Stop frequency (Hz)'),
+                                0, 'Stop frequency (Hz)']
+    input_param['power'] = [gui.tab_home.add_parameter_num('Power (dBm)'),
+                            0, 'Power (dBm)']
 
+    # Set up hardware gui
     global _e_vna, _e_switches
     _e_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
     _e_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
+
     gui.tab_hardware.on_hardware_scan(scan_for_hardware)
     gui.tab_hardware.on_check_connection(check_connections)
+    gui.bottom_bar.on_button_run(on_button_run)
+    gui.bottom_bar.on_button_stop(on_button_stop)
 
+    """     
+        Main application loop   
+    """
     while not gui.core.app_terminated:
         gui.core.update()
+        get_gui_parameters()
+
+        if state == 'idle':
+            pass
+        if state == 'scan':
+            time_start = time.time()
+
+            if port_refl == port_tran:
+                scan_finished = update_ports()
+                if scan_finished:
+                    state = 'scan_finished'
+                continue
+
+            switches.set_tran(port_tran)
+            switches.set_refl(port_refl)
+
+            vna_output = vna.fire()
+
+            # Convert output from string to a list of floats
+            for s_parameter in vna.sp_to_measure:
+                try:
+                    vna_output[s_parameter] = data_handler.format_data_one_sweep(vna_output[s_parameter], vna.freq_list)
+                except data_handler.MissingDataException as error:
+                    error.display_message()
+                    quit()
+
+            for s_parameter in vna.sp_to_measure:
+                output_file_dict[s_parameter].write(OUTPUT_JSON_INDENT + f'"t{port_tran}r{port_refl}"' + ': {\n')
+                output_file_dict[s_parameter].write(
+                    2 * OUTPUT_JSON_INDENT + '"real": ' + str(vna_output[s_parameter][0]) + ',\n')
+                output_file_dict[s_parameter].write(
+                    2 * OUTPUT_JSON_INDENT + '"imag": ' + str(vna_output[s_parameter][1]))
+
+                if port_tran == tran_range[1] and port_refl == refl_range[1] - 1:
+                    output_file_dict[s_parameter].write('\n' + 2 * OUTPUT_JSON_INDENT + '}\n}')  # Close data section
+                else:
+                    output_file_dict[s_parameter].write('\n' + 2 * OUTPUT_JSON_INDENT + '},\n')
+
+            scan_finished = update_ports()
+
+            global time_estimate_one_sweep
+            time_estimate_one_sweep = time.time() - time_start
+
+            if scan_finished:
+                state = 'scan_finished'
+
+            print(f't{port_tran}r{port_refl}')
+        if state == 'scan_finished':
+
+            for s_parameter in vna.sp_to_measure:
+                output_file_dict[s_parameter].write('\n}')  # Required for JSON formatting
+                output_file_dict[s_parameter].close()
+
+            state = 'idle'
+
+
+
+def update_ports():
+    """Cycles the trans and refl port of the switches.
+    Returns a bool to indicate when all trans/refl pairs have
+    been cycled through."""
+    global port_tran, port_refl
+    is_complete = False
+
+    port_refl += 1
+    if port_refl > refl_range[1]:
+        port_tran += 1
+        port_refl = refl_range[0]
+    if port_tran > tran_range[1]:
+        is_complete = True
+
+    return is_complete
+
+
+def on_button_run():
+    """Check that hardware is connected and ready."""
+    scan_for_hardware()
+    if vna.resource is None or switches.resource is None:
+        gui.bottom_bar.message_display('Hardware setup failed.', 'red')
+        return
+
+    """Check that all parameters are valid."""
+    vna.set_parameter_ranges()
+    if not (vna.data_point_count_range[0] <= input_param['num_points'][1] <= vna.data_point_count_range[1]):
+        gui.bottom_bar.message_display('\"' + input_param['num_points'][2] + f'\" must be in range: ' +
+                                       str(vna.data_point_count_range), 'red')
+        return
+    if not (vna.if_bandwidth_range[0] <= input_param['ifbw'][1] <= vna.if_bandwidth_range[1]):
+        gui.bottom_bar.message_display('\"' + input_param['ifbw'][2] + f'\" must be in range: ' +
+                                       str(vna.if_bandwidth_range), 'red')
+        return
+    if not (vna.freq_start_range[0] <= input_param['freq_start'][1] <= vna.freq_start_range[1]):
+        gui.bottom_bar.message_display('\"' + input_param['freq_start'][2] + f'\" must be in range: ' +
+                                       str(vna.freq_start_range), 'red')
+        return
+    if not (vna.freq_stop_range[0] <= input_param['freq_stop'][1] <= vna.freq_stop_range[1]):
+        gui.bottom_bar.message_display('\"' + input_param['freq_stop'][2] + f'\" must be in range: ' +
+                                       str(vna.freq_stop_range), 'red')
+        return
+    if not (vna.power_range[0] <= input_param['power'][1] <= vna.power_range[1]):
+        gui.bottom_bar.message_display('\"' + input_param['power'][2] + f'\" must be in range: ' +
+                                       str(vna.power_range), 'red')
+        return
+    if not (input_param['freq_stop'][1] > input_param['freq_start'][1]):
+        gui.bottom_bar.message_display('Start frequency must be less than stop frequency.', 'red')
+        return
+
+    gui.bottom_bar.message_clear()
+
+    vna.data_point_count = int(input_param['num_points'][1])
+    vna.if_bandwidth = input_param['ifbw'][1]
+    vna.freq_start = input_param['freq_start'][1]
+    vna.freq_stop = input_param['freq_stop'][1]
+    vna.power = input_param['power'][1]
+    vna.initialize()
+
+    switches.initialize()
+
+    """Add meta data and list of frequencies to JSON file"""
+    global output_file_dict
+
+    for s_parameter in vna.sp_to_measure:
+        output_file_dict[s_parameter] = open(output_file_path + '_' + s_parameter + '.json', 'w', encoding='utf-8')
+        output_file_dict[s_parameter].write('{\n')  # Required for JSON formatting
+        json_out = json.dumps(data_handler.format_meta_data(vna, s_parameter), indent=OUTPUT_JSON_INDENT)
+        output_file_dict[s_parameter].write('\"meta\": ' + json_out + ',\n')
+        json_out = json.dumps(vna.freq_list)
+        output_file_dict[s_parameter].write('\"freq\": ' + json_out + ',\n')
+        output_file_dict[s_parameter].write('"data": {\n')
+
+    global port_tran, port_refl
+    port_tran = tran_range[0]
+    port_refl = refl_range[0]
+
+    global state
+    state = 'scan'
+
+
+def on_button_stop():
+    print("Stop")
 
 
 def scan_for_hardware():
+    """Opens the vna and switches resources and checks there is a valid
+    connection with them."""
     visa_resource_manager = visa.ResourceManager(PATH_VISA_LIBRARY)
     r_list = visa_resource_manager.list_resources()
+    global vna, switches
     visa_vna, visa_switches = None, None
 
     if _e_vna.get() in r_list:
         visa_vna = visa_resource_manager.open_resource(_e_vna.get())
-        global vna
-        vna = VNA(visa_vna)
         gui.tab_hardware.set_indicator(0, 'Resource found.', 'green')
     else:
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
+    vna = VNA(visa_vna)
 
     if _e_switches.get() in r_list:
         visa_switches = visa_resource_manager.open_resource(_e_switches.get())
-        global switches
-        switches = Switches(visa_switches)
         gui.tab_hardware.set_indicator(1, 'Resource found.', 'green')
     else:
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
+    switches = Switches(visa_switches)
 
 
 def check_connections():
-    visa_resource_manager = pyvisa.ResourceManager()
+    """Lists available resources and creates a popup to display them."""
+    visa_resource_manager = visa.ResourceManager()
     r_list = visa_resource_manager.list_resources()
     r_display = ''
     for address in r_list:
@@ -69,6 +267,21 @@ def check_connections():
         r_display = 'No resources found.'
 
     gui.tab_hardware.create_message(r_display)
+
+
+def get_gui_parameters():
+    """Gets data from the tkinter widgets and
+    updates all the parameters. For numeric entries,
+    if the input is invalid, the parameter is set to inf."""
+    for key in input_param:
+        try:
+            input_param[key][1] = input_param[key][0].get()
+            try:
+                input_param[key][1] = float(input_param[key][1])
+            except ValueError:
+                input_param[key][1] = float('inf')
+        except tkinter.TclError:
+            pass
 
 
 if __name__ == '__main__':
