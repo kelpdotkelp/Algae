@@ -11,10 +11,10 @@ https://knowledge.ni.com/KnowledgeArticleDetails?id=kA03q000000x2YDCAY&l=en-CA
 
 Author: Noah Stieler, 2023
 """
+import os.path
 import tkinter
 import json
 import pyvisa as visa
-import time
 
 import gui
 import data_handler
@@ -30,7 +30,11 @@ port_refl = refl_range[0]
 PATH_VISA_LIBRARY = r'C:\Windows\system32\visa64.dll'
 
 OUTPUT_JSON_INDENT = '\t'
-output_file_path = r'.\output\may_25'
+output_dir = ''
+output_dir_name = 'algae_output'
+output_full_path = ''  # Concatenation of output dir and parent folder
+# Stores currently open files.
+# Each key is an s-parameter ['S11', 'S12', 'S21', 'S22']
 output_file_dict = {}
 
 vna, switches = VNA(None), Switches(None)
@@ -43,8 +47,12 @@ Each key is an input parameter and the value is a list.
 2 = parameter display name
 """
 input_param = {}
-
-time_estimate_one_sweep = 0
+"""
+Each key holds a list:
+0 = checkbox widget
+1 = current state of the widget (0 or 1)
+"""
+input_s_param = {}
 
 
 # TODO VisaIOError scanning for hardware after having valid hardware
@@ -71,6 +79,10 @@ def main():
     input_param['power'] = [gui.tab_home.add_parameter_num('Power (dBm)'),
                             0, 'Power (dBm)']
 
+    global input_s_param
+    input_s_param = gui.tab_home.add_parameter_checkbox(['S11', 'S12', 'S21', 'S22'])
+    input_s_param['S21'][0].state(['selected'])
+
     # Set up hardware gui
     global _e_vna, _e_switches
     _e_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
@@ -91,8 +103,6 @@ def main():
         if state == 'idle':
             pass
         if state == 'scan':
-            time_start = time.time()
-
             if port_refl == port_tran:
                 scan_finished = update_ports()
                 if scan_finished:
@@ -125,22 +135,21 @@ def main():
                     output_file_dict[s_parameter].write('\n' + 2 * OUTPUT_JSON_INDENT + '},\n')
 
             scan_finished = update_ports()
-
-            global time_estimate_one_sweep
-            time_estimate_one_sweep = time.time() - time_start
+            update_progress_bar()
 
             if scan_finished:
                 state = 'scan_finished'
 
-            print(f't{port_tran}r{port_refl}')
+            # print(f't{port_tran}r{port_refl}')
         if state == 'scan_finished':
 
             for s_parameter in vna.sp_to_measure:
                 output_file_dict[s_parameter].write('\n}')  # Required for JSON formatting
                 output_file_dict[s_parameter].close()
 
-            state = 'idle'
+            gui.bottom_bar.progress_bar_set(0)
 
+            state = 'idle'
 
 
 def update_ports():
@@ -161,6 +170,11 @@ def update_ports():
 
 
 def on_button_run():
+    """Begins a scan.
+    Checks that hardware is connected and ready,
+    that all user input is valid, and sets up output directory and files.
+    Assuming no user errors, state is changed to 'scan'."""
+
     """Check that hardware is connected and ready."""
     scan_for_hardware()
     if vna.resource is None or switches.resource is None:
@@ -193,22 +207,47 @@ def on_button_run():
         gui.bottom_bar.message_display('Start frequency must be less than stop frequency.', 'red')
         return
 
+    if not os.path.isdir(gui.tab_home.get_output_dir()):
+        gui.bottom_bar.message_display('Invalid output directory.', 'red')
+        return
+
     gui.bottom_bar.message_clear()
 
+    """Set up output directory"""
+    global output_dir, output_full_path
+    output_dir = gui.tab_home.get_output_dir()
+    dir_created = False
+
+    index = 0
+    while not dir_created:
+        if os.path.isdir(output_dir + rf'\{output_dir_name}_{index}'):
+            index += 1
+        else:
+            output_full_path = output_dir + rf'\{output_dir_name}_{index}'
+            os.mkdir(output_full_path)
+            dir_created = True
+
+    """Initialize vna parameters"""
     vna.data_point_count = int(input_param['num_points'][1])
     vna.if_bandwidth = input_param['ifbw'][1]
     vna.freq_start = input_param['freq_start'][1]
     vna.freq_stop = input_param['freq_stop'][1]
     vna.power = input_param['power'][1]
-    vna.initialize()
 
+    vna.sp_to_measure = []
+    for key in input_s_param:
+        if input_s_param[key][1] == 1:
+            vna.sp_to_measure.append(key)
+    return
+
+    vna.initialize()
     switches.initialize()
 
     """Add meta data and list of frequencies to JSON file"""
     global output_file_dict
 
     for s_parameter in vna.sp_to_measure:
-        output_file_dict[s_parameter] = open(output_file_path + '_' + s_parameter + '.json', 'w', encoding='utf-8')
+        output_file_dict[s_parameter] = open(output_full_path + '\\' + s_parameter + '.json', 'w', encoding='utf-8')
         output_file_dict[s_parameter].write('{\n')  # Required for JSON formatting
         json_out = json.dumps(data_handler.format_meta_data(vna, s_parameter), indent=OUTPUT_JSON_INDENT)
         output_file_dict[s_parameter].write('\"meta\": ' + json_out + ',\n')
@@ -272,16 +311,31 @@ def check_connections():
 def get_gui_parameters():
     """Gets data from the tkinter widgets and
     updates all the parameters. For numeric entries,
-    if the input is invalid, the parameter is set to inf."""
-    for key in input_param:
-        try:
+    if the input is invalid, the parameter is set to inf.
+    This will correctly throw an error when checking parameters."""
+    try:
+        for key in input_param:
             input_param[key][1] = input_param[key][0].get()
             try:
                 input_param[key][1] = float(input_param[key][1])
             except ValueError:
                 input_param[key][1] = float('inf')
-        except tkinter.TclError:
-            pass
+
+        for key in input_s_param:
+            if 'selected' in input_s_param[key][0].state():
+                input_s_param[key][1] = 1
+            else:
+                input_s_param[key][1] = 0
+    except tkinter.TclError:
+        pass
+
+
+def update_progress_bar():
+    try:
+        pair_count = tran_range[1] * (refl_range[1] - 1)
+        gui.bottom_bar.progress_bar_set((port_tran * 24 - 1 + port_refl) / pair_count)
+    except tkinter.TclError:
+        pass
 
 
 if __name__ == '__main__':

@@ -66,3 +66,8 @@ def toggle_button_stop():
         _button_stop['state'] = tk.ACTIVE
     else:
         _button_stop['state'] = tk.DISABLED
+
+
+def progress_bar_set(value):
+    """value ranges from 0 to 1"""
+    _progress_bar['value'] = 100 * value

@@ -25,7 +25,7 @@ class VNA:
         self.resource = resource
         self.name = ""
 
-        self.sp_to_measure = ['S11', 'S12', 'S21', 'S22']
+        self.sp_to_measure = ['S21']
         self.data_point_count = 5
         self.if_bandwidth = 5 * 1000  # Hz
         self.freq_start = 3 * 1000000000  # Hz
