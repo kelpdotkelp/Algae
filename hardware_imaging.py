@@ -101,8 +101,8 @@ class VNA:
     def fire(self):
         """Trigger the VNA and return the data it collected."""
         self.write('INIT:IMM')
-        self.write('*WAI')  # *OPC? might be better because it stops the controller from attempting a read
-        # self.query('*OPC?')  # Controller waits until all commands are completed.
+        # self.write('*WAI')  # *OPC? might be better because it stops the controller from attempting a read
+        self.query('*OPC?')  # Controller waits until all commands are completed.
 
         # Using convention that parameter names are prefixed with 'parameter_'
         output = {}

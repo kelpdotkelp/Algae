@@ -69,7 +69,7 @@ class MissingDataException(Exception):
         self.actual_num_count = actual_num_count
         self.expected_num_count = expected_num_count
 
-    def display_message(self):
-        print(f'MissingDataException:'
-              f'\n\texpected {self.expected_num_count} floating point numbers'
-              f'\n\trecieved from vna {self.actual_num_count} floating point numbers')
+    def get_message(self):
+        msg = f'MissingDataException:\n\texpected {self.expected_num_count} floating point numbers' \
+              f'\n\treceived from vna {self.actual_num_count} floating point numbers'
+        return msg

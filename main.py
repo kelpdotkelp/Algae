@@ -19,6 +19,7 @@ import pyvisa as visa
 import gui
 import data_handler
 from hardware_imaging import VNA, Switches
+import canvas
 
 state = 'idle'
 
@@ -88,10 +89,11 @@ def main():
     _e_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
     _e_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
 
+    # Define button functionality
     gui.tab_hardware.on_hardware_scan(scan_for_hardware)
     gui.tab_hardware.on_check_connection(check_connections)
     gui.bottom_bar.on_button_run(on_button_run)
-    gui.bottom_bar.on_button_stop(on_button_stop)
+    gui.bottom_bar.on_button_stop(abort_scan)
 
     """     
         Main application loop   
@@ -99,6 +101,8 @@ def main():
     while not gui.core.app_terminated:
         gui.core.update()
         get_gui_parameters()
+
+        canvas.update()
 
         if state == 'idle':
             pass
@@ -119,8 +123,8 @@ def main():
                 try:
                     vna_output[s_parameter] = data_handler.format_data_one_sweep(vna_output[s_parameter], vna.freq_list)
                 except data_handler.MissingDataException as error:
-                    error.display_message()
-                    quit()
+                    gui.bottom_bar.message_display(error.get_message(), 'red')
+                    abort_scan()
 
             for s_parameter in vna.sp_to_measure:
                 output_file_dict[s_parameter].write(OUTPUT_JSON_INDENT + f'"t{port_tran}r{port_refl}"' + ': {\n')
@@ -148,6 +152,7 @@ def main():
                 output_file_dict[s_parameter].close()
 
             gui.bottom_bar.progress_bar_set(0)
+            gui.bottom_bar.toggle_button_stop()
 
             state = 'idle'
 
@@ -238,7 +243,6 @@ def on_button_run():
     for key in input_s_param:
         if input_s_param[key][1] == 1:
             vna.sp_to_measure.append(key)
-    return
 
     vna.initialize()
     switches.initialize()
@@ -259,12 +263,21 @@ def on_button_run():
     port_tran = tran_range[0]
     port_refl = refl_range[0]
 
+    gui.bottom_bar.toggle_button_stop()
+
     global state
     state = 'scan'
 
 
-def on_button_stop():
-    print("Stop")
+def abort_scan():
+    for s_parameter in vna.sp_to_measure:
+        output_file_dict[s_parameter].close()
+
+    gui.bottom_bar.progress_bar_set(0)
+    gui.bottom_bar.toggle_button_stop()
+
+    global state
+    state = 'idle'
 
 
 def scan_for_hardware():
