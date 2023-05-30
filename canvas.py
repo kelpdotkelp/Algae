@@ -44,9 +44,9 @@ def update():
             fill = '#F6F6F6'  # gray
 
         if _tran == i + 1:
-            fill = '#00CCFF'  # blue
+            fill = '#30C03F'  # '#00CCFF'  # blue
         if _refl == i + 1:
-            fill = '#83FF00'  # green
+            fill = '#ABEDD0'  # '#83FF00'  # green
 
         gui.tab_home.canvas.itemconfigure(_line_list[i], fill=fill)
 
