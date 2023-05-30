@@ -23,7 +23,7 @@ app_terminated = False
 _root = None
 _tab_control = None
 
-_tab_index = 0
+tab_index = 0
 
 
 def _config_base_frames(tabs, frame_bottom_bar):
@@ -77,7 +77,7 @@ def create_gui():
     _tab_control.add(frame_tab_hardware, text='Hardware')
     _tab_control.pack(expand=True, fill='both')
     _tab_control.bind('<<NotebookTabChanged>>', _on_tab_change)
-    _tab_control.select(_tab_index)
+    _tab_control.select(tab_index)
 
 
 def update():
@@ -86,5 +86,5 @@ def update():
 
 
 def _on_tab_change(event):
-    global _tab_index
-    _tab_index = _tab_control.index(_tab_control.select())
+    global tab_index
+    tab_index = _tab_control.index(_tab_control.select())

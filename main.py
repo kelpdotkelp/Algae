@@ -102,7 +102,9 @@ def main():
         gui.core.update()
         get_gui_parameters()
 
-        # canvas.update()
+        gui.tab_home.draw_canvas(canvas.update)
+
+        debug_play_graphics()
 
         if state == 'idle':
             pass
@@ -160,7 +162,7 @@ def main():
 def update_ports():
     """Cycles the trans and refl port of the switches.
     Returns a bool to indicate when all trans/refl pairs have
-    been cycled through."""
+    been cycled through. Also updates canvas info."""
     global port_tran, port_refl
     is_complete = False
 
@@ -170,6 +172,11 @@ def update_ports():
         port_refl = refl_range[0]
     if port_tran > tran_range[1]:
         is_complete = True
+        canvas.port_reset()
+    else:
+        canvas.port_complete(port_tran - 1)
+
+    canvas.port_pair(port_tran, port_refl)
 
     return is_complete
 
@@ -355,6 +362,13 @@ def update_progress_bar():
         gui.bottom_bar.progress_bar_set((port_tran * 24 - 1 + port_refl) / pair_count)
     except tkinter.TclError:
         pass
+
+
+def debug_play_graphics():
+    import time
+    update_ports()
+    print(f't{port_tran}r{port_refl}')
+    time.sleep(0.05)
 
 
 if __name__ == '__main__':

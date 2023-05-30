@@ -8,7 +8,7 @@ Canvas is handled externally to enable graphics for multiple
 experiments.
 
 Only parameters ex. numeric, checkbox can be configured externally.
-Output path and description fields experiment indpendent and so are
+Output path and description fields experiment independent and so are
 defined by default.
 
 Author: Noah Stieler, 2023
@@ -161,6 +161,22 @@ def get_output_dir():
 
 def get_description():
     return _text_desc.get()
+
+
+def draw_canvas(draw_func):
+    """Wrapper function for drawing to the canvas.
+    Performs all the needed checks before drawing so draw_func
+    only needs to code to render images."""
+
+    # Crashes if updating canvas when not rendering it
+    # ex. being on a different tab
+    try:
+        if canvas is not None and \
+                canvas_size != 0 and \
+                canvas.winfo_viewable():
+            draw_func()
+    except tk.TclError:  # Thrown when closing window
+        pass
 
 
 def _on_file_press():
