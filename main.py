@@ -102,7 +102,7 @@ def main():
         gui.core.update()
         get_gui_parameters()
 
-        canvas.update()
+        # canvas.update()
 
         if state == 'idle':
             pass
@@ -252,11 +252,17 @@ def on_button_run():
 
     for s_parameter in vna.sp_to_measure:
         output_file_dict[s_parameter] = open(output_full_path + '\\' + s_parameter + '.json', 'w', encoding='utf-8')
+
         output_file_dict[s_parameter].write('{\n')  # Required for JSON formatting
-        json_out = json.dumps(data_handler.format_meta_data(vna, s_parameter), indent=OUTPUT_JSON_INDENT)
+
+        json_out = json.dumps(
+            data_handler.format_meta_data(vna, s_parameter, gui.tab_home.get_description())
+            , indent=OUTPUT_JSON_INDENT)
         output_file_dict[s_parameter].write('\"meta\": ' + json_out + ',\n')
+
         json_out = json.dumps(vna.freq_list)
         output_file_dict[s_parameter].write('\"freq\": ' + json_out + ',\n')
+
         output_file_dict[s_parameter].write('"data": {\n')
 
     global port_tran, port_refl

@@ -42,11 +42,10 @@ def format_data_one_sweep(str_points, freq_list):
     return measurement_set
 
 
-def format_meta_data(vna, s_parameter, posx=0, posy=0, scan_index=0):
+def format_meta_data(vna, s_parameter, description, posx=0, posy=0):
     """Returns the correctly structured dictionary that can later
     be incorporated into JSON format"""
     out_dict = {
-        'scan_index': scan_index,
         's_parameter': s_parameter,
         'freq_start': vna.freq_start,
         'freq_stop': vna.freq_stop,
@@ -58,6 +57,7 @@ def format_meta_data(vna, s_parameter, posx=0, posy=0, scan_index=0):
         'vna_name': vna.name,
         'date': str(date.today()),
         'time': (datetime.now()).strftime('%H:%M:%S'),
+        'description': description
     }
     return out_dict
 

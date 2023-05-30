@@ -7,6 +7,10 @@ Sets up and handles the home tab.
 Canvas is handled externally to enable graphics for multiple
 experiments.
 
+Only parameters ex. numeric, checkbox can be configured externally.
+Output path and description fields experiment indpendent and so are
+defined by default.
+
 Author: Noah Stieler, 2023
 """
 
@@ -22,6 +26,7 @@ _parameter_row_count = 0
 
 _entry_file_path = None
 _button_file = None
+_text_desc = None
 
 
 def add_parameter_num(display_name):
@@ -45,13 +50,11 @@ def add_parameter_num(display_name):
 
 def add_parameter_checkbox(display_name_list):
     global _parameter_row_count
-    padding_x = 15
-    padding_y = 10
 
     _frame_parameter_box.rowconfigure(index=_parameter_row_count, weight=1)
 
     new_frame = tk.Frame(_frame_parameter_box)
-    new_frame.grid(row=_parameter_row_count, column=0, pady=padding_y, sticky='nsew')
+    new_frame.grid(row=_parameter_row_count, column=0, sticky='nsew')
     new_frame.rowconfigure(index=0, weight=1)
 
     checkbox_list = {}
@@ -71,6 +74,7 @@ def add_parameter_checkbox(display_name_list):
 
 
 def create(frame_content_base):
+    # Set up input and display frames
     frame_page_base = tk.Frame(frame_content_base)
 
     frame_input = tk.Frame(frame_page_base)
@@ -82,38 +86,44 @@ def create(frame_content_base):
     frame_input.grid(row=0, column=0, sticky='nsew')
     frame_display.grid(row=0, column=1, sticky='nsew')
 
-    """PARAMETERS"""
+    # Add to frame_input
     frame_input.pack_propagate(False)
 
+    #       Create widgets
     label_parameter = tk.Label(frame_input, text='Parameters',
                                background=frame_input['background'],
                                font=('Arial', 12))
-    label_parameter.pack(padx=50, pady=(60, 10), anchor='w')
-
     global _frame_parameter_box
     _frame_parameter_box = tk.Frame(frame_input, width=400, height=300,
                                     borderwidth=3, relief=tk.SUNKEN)
-    _frame_parameter_box.grid_propagate(True)
-    _frame_parameter_box.columnconfigure(index=0, weight=1)
-    _frame_parameter_box.pack(padx=50, anchor='w')
-
-    """OUTPUT"""
     label_output = tk.Label(frame_input, text='Output',
                             background=frame_input['background'],
                             font=('Arial', 12))
-    label_output.pack(padx=50, pady=(25, 10), anchor='w')
-
     frame_output_box = tk.Frame(frame_input, width=_frame_parameter_box['width'] - 30, height=85,
                                 borderwidth=3, relief=tk.SUNKEN)
-    frame_output_box.pack(padx=50, anchor='w')
-    frame_output_box.grid_propagate(False)
 
+    #       Add to frame
+    label_parameter.pack(padx=50, pady=(60, 10), anchor='w')
+    _frame_parameter_box.pack(padx=50, anchor='w', fill=tk.X)
+    label_output.pack(padx=50, pady=(25, 10), anchor='w')
+    frame_output_box.pack(padx=50, anchor='w', fill=tk.X)
+
+    """PARAMETERS"""
+    _frame_parameter_box.grid_propagate(True)
+    _frame_parameter_box.columnconfigure(index=0, weight=1)
+
+    """OUTPUT"""
+    frame_output_box.grid_propagate(True)
+    frame_output_box.rowconfigure(index=1, weight=1)
+    frame_output_box.columnconfigure(index=0, weight=1)
+
+    # Output directory path
     label_odp = tk.Label(frame_output_box, text='Output directory path')
     label_odp.grid(row=0, column=0, padx=15, pady=5, sticky='w')
 
-    frame_path = tk.Frame(frame_output_box, width=_frame_parameter_box['width'] - 75, height=30)
-    frame_path.grid_propagate(False)
-    frame_path.grid(row=1, column=0, padx=15, pady=5)
+    frame_path = tk.Frame(frame_output_box)
+    frame_path.grid_propagate(True)
+    frame_path.grid(row=1, column=0, padx=15, pady=5, sticky='ew')
     frame_path.columnconfigure(index=0, weight=1)
     frame_path.rowconfigure(index=0, weight=1)
 
@@ -124,6 +134,14 @@ def create(frame_content_base):
     _button_file = ttk.Button(frame_path, text='. . .', width=5)
     _button_file.configure(command=_on_file_press)
     _button_file.grid(row=0, column=1)
+
+    # Description
+    label_desc = tk.Label(frame_output_box, text='Description')
+    label_desc.grid(row=2, column=0, padx=15, pady=5, sticky='w')
+
+    global _text_desc
+    _text_desc = tk.Entry(frame_output_box)
+    _text_desc.grid(row=3, column=0, padx=15, pady=5, sticky='ew')
 
     """CANVAS"""
     frame_display.pack_propagate(False)
@@ -139,6 +157,10 @@ def create(frame_content_base):
 
 def get_output_dir():
     return _entry_file_path.get()
+
+
+def get_description():
+    return _text_desc.get()
 
 
 def _on_file_press():
