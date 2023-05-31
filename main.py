@@ -56,12 +56,18 @@ Each key holds a list:
 input_s_param = {}
 
 
-# TODO VisaIOError scanning for hardware after having valid hardware
-# then disconnecting USB and scanning again, need
+"""
+Bug
+VisaIOError: VI_ERROR_INV_OBJECT 
+Thrown when:
+    1. Valid hardware is set up
+    2. USB is disconnected
+Thrown by: pyvisa/highlevel.py
+-Not sure how to fix something thrown within the package
+-Not a fatal error either as everything works if USB is
+    connected again 
+"""
 
-# TODO Might be useful for debugging: Decorator for timing vna operations
-# TODO user input field for meta data to describe what the target is
-# TODO user defined trans/refl ranges
 
 def main():
     global state
