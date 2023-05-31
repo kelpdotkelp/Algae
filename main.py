@@ -104,7 +104,7 @@ def main():
 
         gui.tab_home.draw_canvas(canvas.update)
 
-        debug_play_graphics()
+        # debug_play_graphics()
 
         if state == 'idle':
             pass
@@ -174,7 +174,7 @@ def update_ports():
         is_complete = True
         canvas.port_reset()
     else:
-        canvas.port_complete(port_tran - 1)
+        canvas.port_complete(port_tran)
 
     canvas.port_pair(port_tran, port_refl)
 
@@ -289,6 +289,8 @@ def abort_scan():
     gui.bottom_bar.progress_bar_set(0)
     gui.bottom_bar.toggle_button_stop()
 
+    canvas.port_reset()
+
     global state
     state = 'idle'
 
@@ -368,7 +370,7 @@ def debug_play_graphics():
     import time
     update_ports()
     print(f't{port_tran}r{port_refl}')
-    time.sleep(0.05)
+    time.sleep(0.25)
 
 
 if __name__ == '__main__':

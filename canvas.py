@@ -43,10 +43,10 @@ def update():
         else:
             fill = '#F6F6F6'  # gray
 
-        if _tran == i + 1:
-            fill = '#30C03F'  # '#00CCFF'  # blue
-        if _refl == i + 1:
-            fill = '#ABEDD0'  # '#83FF00'  # green
+        if _tran == i:
+            fill = '#30C03F'  # green
+        if _refl == i and _refl != _tran:
+            fill = '#ABEDD0'  # blue
 
         gui.tab_home.canvas.itemconfigure(_line_list[i], fill=fill)
 
@@ -96,5 +96,5 @@ def port_complete(port):
 
 def port_pair(tran, refl):
     global _tran, _refl
-    _tran = tran
-    _refl = refl
+    _tran = tran - 1
+    _refl = refl - 1

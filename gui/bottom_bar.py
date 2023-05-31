@@ -62,7 +62,7 @@ def on_button_stop(function):
 
 
 def toggle_button_stop():
-    if _button_stop['state'] == tk.DISABLED:
+    if str(_button_stop['state']) == tk.DISABLED:
         _button_stop['state'] = tk.ACTIVE
     else:
         _button_stop['state'] = tk.DISABLED
