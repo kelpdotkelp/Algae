@@ -159,6 +159,9 @@ def main():
                 output_file_dict[s_parameter].write('\n}')  # Required for JSON formatting
                 output_file_dict[s_parameter].close()
 
+            vna.close()
+            switches.close()
+
             gui.bottom_bar.progress_bar_set(0)
             gui.bottom_bar.toggle_button_stop()
 

@@ -46,9 +46,17 @@ class VNA:
             return
 
         try:
+            self.write('*RST')
             self.resource.close()
         except visa.errors.VisaIOError:
             pass
+        except visa.errors.InvalidSession:
+            pass
+
+    def close(self):
+        # Sending *RST prevents vna software crash
+        self.write('*RST')
+        self.resource.close()
 
     def initialize(self):
         self.resource.read_termination = '\n'
@@ -180,6 +188,11 @@ class Switches:
             self.resource.close()
         except visa.errors.VisaIOError:
             pass
+        except visa.errors.InvalidSession:
+            pass
+
+    def close(self):
+        self.resource.close()
 
     def initialize(self):
         self.write('*rst')  # reset
