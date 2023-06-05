@@ -17,7 +17,7 @@ Author: Noah Stieler, 2023
 import time
 import pyvisa as visa
 
-from device_0.data_handler import vna_str_to_float
+from .data_handler import vna_str_to_float
 
 
 class VNA:

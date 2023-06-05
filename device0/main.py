@@ -17,9 +17,9 @@ import json
 import pyvisa as visa
 
 import gui
-import device_0.data_handler as data_handler
-import device_0.canvas as canvas
-from device_0.hardware_imaging import VNA, Switches
+from . import data_handler
+from . import canvas
+from .hardware_imaging import VNA, Switches
 
 state = 'idle'
 
@@ -378,9 +378,4 @@ def update_progress_bar():
 def debug_play_graphics():
     import time
     update_ports()
-    print(f't{port_tran}r{port_refl}')
     time.sleep(0.25)
-
-
-if __name__ == '__main__':
-    main()

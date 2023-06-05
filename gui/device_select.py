@@ -28,7 +28,7 @@ def create_gui():
     _frame_base.pack(expand=True, fill=tk.BOTH, padx=15, pady=15)
 
     label = tk.Label(_frame_base, text='Please select a device: ',
-                     background=_root['background'],
+                     background=_frame_base['background'],
                      font=('Arial', 12))
     label.pack(anchor='w')
 

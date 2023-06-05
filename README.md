@@ -3,7 +3,7 @@ Algae is being designed to provide a user-friendly
 graphical application that can be extended to control multiple different electromagnetic imaging experiments. The goal is to automate
 the process of positioning the target and scanning it in order to collect large datasets.
 
-Experiment 1 - Scans the 2D cross section of the target, and measures the S-parameters.
+Device 0 - Scans the 2D cross section of the target.
 
 Uses the following hardware:
 
