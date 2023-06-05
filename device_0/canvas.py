@@ -12,7 +12,7 @@ Author: Noah Stieler, 2023
 import gui
 import math
 
-from hardware_imaging import Switches
+from device_0.hardware_imaging import Switches
 
 _init = False
 

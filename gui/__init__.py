@@ -11,6 +11,7 @@ import gui.core
 import gui.tab_hardware
 import gui.tab_home
 import gui.bottom_bar
+import gui.device_select
 
 # VERY IMPORTANT
 # This removes blur on all text.

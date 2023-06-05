@@ -7,7 +7,7 @@ Creates window and main gui frames.
 
 Author: Noah Stieler, 2023
 """
-
+import tkinter
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -57,8 +57,11 @@ def _create_window():
     _root.geometry(f'{_WIDTH}x{_HEIGHT}+50+50')
     _root.protocol('WM_DELETE_WINDOW', on_closing)
 
-    icon = tk.PhotoImage(file='./res/icon_titlebar.png')
-    _root.iconphoto(True, icon)
+    try:
+        icon = tk.PhotoImage(file='./res/icon_titlebar.png')
+        _root.iconphoto(True, icon)
+    except tkinter.TclError:
+        pass
 
 
 def create_gui():
