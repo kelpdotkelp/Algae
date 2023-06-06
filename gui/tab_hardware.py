@@ -87,15 +87,3 @@ def on_hardware_scan(function):
 
 def on_check_connection(function):
     _button_c_connect.configure(command=function)
-
-
-def create_message(message):
-    root = tk.Tk()
-    root.resizable(False, False)
-    root.title('Resource Finder')
-    root.geometry(f'{650}x{200}+50+50')
-
-    text = tk.Text(root)
-    text.insert('1.0', message)
-    text['state'] = tk.DISABLED
-    text.pack()

@@ -39,7 +39,7 @@ def add_device(func_on_press, display_name='Device'):
         func_on_press()
 
     button = ttk.Button(_frame_base, text=display_name, command=transition)
-    button.pack(pady=8, anchor='w')
+    button.pack(pady=8, fill=tk.X)
 
 
 def update():

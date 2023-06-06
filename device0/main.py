@@ -13,10 +13,10 @@ Author: Noah Stieler, 2023
 """
 import os.path
 import tkinter
-import json
 import pyvisa as visa
 
 import gui
+import out
 from . import data_handler
 from . import canvas
 from .hardware_imaging import VNA, Switches
@@ -29,14 +29,6 @@ port_tran = tran_range[0]
 port_refl = refl_range[0]
 
 PATH_VISA_LIBRARY = r'C:\Windows\system32\visa64.dll'
-
-OUTPUT_JSON_INDENT = '\t'
-output_dir = ''
-output_dir_name = 'algae_output'
-output_full_path = ''  # Concatenation of output dir and parent folder
-# Stores currently open files.
-# Each key is an s-parameter ['S11', 'S12', 'S21', 'S22']
-output_file_dict = {}
 
 vna, switches = VNA(None), Switches(None)
 _e_vna, _e_switches = None, None
@@ -54,7 +46,6 @@ Each key holds a list:
 1 = current state of the widget (0 or 1)
 """
 input_s_param = {}
-
 
 """
 Bug
@@ -110,7 +101,7 @@ def main():
 
         gui.tab_home.draw_canvas(canvas.update)
 
-        # debug_play_graphics()
+        # _debug_play_graphics()
 
         if state == 'idle':
             pass
@@ -134,30 +125,24 @@ def main():
                     gui.bottom_bar.message_display(error.get_message(), 'red')
                     abort_scan()
 
+            # Write to output files
             for s_parameter in vna.sp_to_measure:
-                output_file_dict[s_parameter].write(OUTPUT_JSON_INDENT + f'"t{port_tran}r{port_refl}"' + ': {\n')
-                output_file_dict[s_parameter].write(
-                    2 * OUTPUT_JSON_INDENT + '"real": ' + str(vna_output[s_parameter][0]) + ',\n')
-                output_file_dict[s_parameter].write(
-                    2 * OUTPUT_JSON_INDENT + '"imag": ' + str(vna_output[s_parameter][1]))
-
+                data_close = False
                 if port_tran == tran_range[1] and port_refl == refl_range[1] - 1:
-                    output_file_dict[s_parameter].write('\n' + 2 * OUTPUT_JSON_INDENT + '}\n}')  # Close data section
-                else:
-                    output_file_dict[s_parameter].write('\n' + 2 * OUTPUT_JSON_INDENT + '},\n')
+                    data_close = True
+
+                out.out_file_data_write(s_parameter, port_tran, port_refl,
+                                        vna_output[s_parameter][0],
+                                        vna_output[s_parameter][1], data_close)
 
             scan_finished = update_ports()
             update_progress_bar()
 
             if scan_finished:
                 state = 'scan_finished'
-
-            # print(f't{port_tran}r{port_refl}')
         if state == 'scan_finished':
-
             for s_parameter in vna.sp_to_measure:
-                output_file_dict[s_parameter].write('\n}')  # Required for JSON formatting
-                output_file_dict[s_parameter].close()
+                out.out_file_complete(s_parameter)
 
             vna.close()
             switches.close()
@@ -202,7 +187,7 @@ def on_button_run():
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
 
-    """Check that all parameters are valid."""
+    """Check that all inputs are valid."""
     vna.set_parameter_ranges()
     if not (vna.data_point_count_range[0] <= input_param['num_points'][1] <= vna.data_point_count_range[1]):
         gui.bottom_bar.message_display('\"' + input_param['num_points'][2] + f'\" must be in range: ' +
@@ -234,20 +219,6 @@ def on_button_run():
 
     gui.bottom_bar.message_clear()
 
-    """Set up output directory"""
-    global output_dir, output_full_path
-    output_dir = gui.tab_home.get_output_dir()
-    dir_created = False
-
-    index = 0
-    while not dir_created:
-        if os.path.isdir(output_dir + rf'\{output_dir_name}_{index}'):
-            index += 1
-        else:
-            output_full_path = output_dir + rf'\{output_dir_name}_{index}'
-            os.mkdir(output_full_path)
-            dir_created = True
-
     """Initialize vna parameters"""
     vna.data_point_count = int(input_param['num_points'][1])
     vna.if_bandwidth = input_param['ifbw'][1]
@@ -263,23 +234,14 @@ def on_button_run():
     vna.initialize()
     switches.initialize()
 
-    """Add meta data and list of frequencies to JSON file"""
-    global output_file_dict
+    """Initialize output file structure"""
+    out.init_root(gui.tab_home.get_output_dir())
+    out.mkdir_new_pos()
 
     for s_parameter in vna.sp_to_measure:
-        output_file_dict[s_parameter] = open(output_full_path + '\\' + s_parameter + '.json', 'w', encoding='utf-8')
-
-        output_file_dict[s_parameter].write('{\n')  # Required for JSON formatting
-
-        json_out = json.dumps(
-            data_handler.format_meta_data(vna, s_parameter, gui.tab_home.get_description())
-            , indent=OUTPUT_JSON_INDENT)
-        output_file_dict[s_parameter].write('\"meta\": ' + json_out + ',\n')
-
-        json_out = json.dumps(vna.freq_list)
-        output_file_dict[s_parameter].write('\"freq\": ' + json_out + ',\n')
-
-        output_file_dict[s_parameter].write('"data": {\n')
+        meta_dict = data_handler.format_meta_data(vna, s_parameter,
+                                                  gui.tab_home.get_description())
+        out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
     global port_tran, port_refl
     port_tran = tran_range[0]
@@ -293,7 +255,8 @@ def on_button_run():
 
 def abort_scan():
     for s_parameter in vna.sp_to_measure:
-        output_file_dict[s_parameter].close()
+        """output_file_dict[s_parameter].close()"""
+        out.out_file_complete(s_parameter)
 
     gui.bottom_bar.progress_bar_set(0)
     gui.bottom_bar.toggle_button_stop()
@@ -342,7 +305,7 @@ def check_connections():
     if len(r_list) == 0:
         r_display = 'No resources found.'
 
-    gui.tab_hardware.create_message(r_display)
+    gui.core.create_popup(r_display)
 
 
 def get_gui_parameters():
@@ -375,7 +338,8 @@ def update_progress_bar():
         pass
 
 
-def debug_play_graphics():
+def _debug_play_graphics():
     import time
     update_ports()
+    update_progress_bar()
     time.sleep(0.25)

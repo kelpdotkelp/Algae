@@ -235,17 +235,5 @@ class SwitchInvalidPortException(Exception):
         self.attempted_port = attempted_port
 
     def display_message(self):
-        print(f'SwtichInvalidPortException:'
+        print(f'SwitchInvalidPortException:'
               f'\n\tPort {self.attempted_port} is invalid.')
-
-
-"""
-    Code from previous software, kept here for reference.
-    self.write('DISPLAY:WINDOW1:STATE ON')
-    self.write('CALCULATE1:PARAMETER:DEFINE \'CH1_1_S21\', S21')
-    self.write('DISPLAY:WINDOW1:TRACE1:FEED \'CH1_1_S21\'')
-
-    self.write('DISPLAY:WINDOW2:STATE ON')
-    self.write('CALCULATE1:PARAMETER:DEFINE \'CH2_1_S11\', S11')
-    self.write('DISPLAY:WINDOW2:TRACE1:FEED \'CH2_1_S11\'')
-"""

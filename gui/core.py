@@ -91,6 +91,18 @@ def update():
     _root.update()
 
 
+def create_popup(message):
+    root = tk.Tk()
+    root.resizable(False, False)
+    root.title('Resource Finder')
+    root.geometry(f'{650}x{200}+50+50')
+
+    text = tk.Text(root)
+    text.insert('1.0', message)
+    text['state'] = tk.DISABLED
+    text.pack()
+
+
 def _on_tab_change(event):
     global tab_index
     tab_index = _tab_control.index(_tab_control.select())
