@@ -20,6 +20,7 @@ import out
 from . import data_handler
 from . import canvas
 from .hardware_imaging import VNA, Switches
+from .input_validate import input_validate
 
 state = 'idle'
 
@@ -181,40 +182,21 @@ def on_button_run():
     that all user input is valid, and sets up output directory and files.
     Assuming no user errors, state is changed to 'scan'."""
 
-    """Check that hardware is connected and ready."""
     scan_for_hardware()
+    """Check that hardware is connected and ready."""
     if vna.resource is None or switches.resource is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
 
-    """Check that all inputs are valid."""
     vna.set_parameter_ranges()
-    if not (vna.data_point_count_range[0] <= input_param['num_points'][1] <= vna.data_point_count_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['num_points'][2] + f'\" must be in range: ' +
-                                       str(vna.data_point_count_range), 'red')
-        return
-    if not (vna.if_bandwidth_range[0] <= input_param['ifbw'][1] <= vna.if_bandwidth_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['ifbw'][2] + f'\" must be in range: ' +
-                                       str(vna.if_bandwidth_range), 'red')
-        return
-    if not (vna.freq_start_range[0] <= input_param['freq_start'][1] <= vna.freq_start_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['freq_start'][2] + f'\" must be in range: ' +
-                                       str(vna.freq_start_range), 'red')
-        return
-    if not (vna.freq_stop_range[0] <= input_param['freq_stop'][1] <= vna.freq_stop_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['freq_stop'][2] + f'\" must be in range: ' +
-                                       str(vna.freq_stop_range), 'red')
-        return
-    if not (vna.power_range[0] <= input_param['power'][1] <= vna.power_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['power'][2] + f'\" must be in range: ' +
-                                       str(vna.power_range), 'red')
-        return
-    if not (input_param['freq_stop'][1] > input_param['freq_start'][1]):
-        gui.bottom_bar.message_display('Start frequency must be less than stop frequency.', 'red')
-        return
 
-    if not os.path.isdir(gui.tab_home.get_output_dir()):
-        gui.bottom_bar.message_display('Invalid output directory.', 'red')
+    vna.sp_to_measure = []
+    for key in input_s_param:
+        if input_s_param[key][1] == 1:
+            vna.sp_to_measure.append(key)
+
+    valid = input_validate(vna, input_param)
+    if not valid:
         return
 
     gui.bottom_bar.message_clear()
@@ -225,11 +207,6 @@ def on_button_run():
     vna.freq_start = input_param['freq_start'][1]
     vna.freq_stop = input_param['freq_stop'][1]
     vna.power = input_param['power'][1]
-
-    vna.sp_to_measure = []
-    for key in input_s_param:
-        if input_s_param[key][1] == 1:
-            vna.sp_to_measure.append(key)
 
     vna.initialize()
     switches.initialize()
