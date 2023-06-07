@@ -11,7 +11,6 @@ https://knowledge.ni.com/KnowledgeArticleDetails?id=kA03q000000x2YDCAY&l=en-CA
 
 Author: Noah Stieler, 2023
 """
-import os.path
 import tkinter
 import pyvisa as visa
 
