@@ -40,7 +40,6 @@ class VNA:
         self.power_range = ()
 
         self.freq_list = self._freq_list_linspace()
-        self.sweep_time = 0
 
     def __del__(self):
         if self.resource is None:

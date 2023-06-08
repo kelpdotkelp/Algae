@@ -16,9 +16,10 @@ import pyvisa as visa
 
 import gui
 import out
+from display_resources import visa_display_resources
 from . import data_handler
 from . import canvas
-from .hardware_imaging import VNA, Switches
+from .imaging import VNA, Switches
 from .input_validate import input_validate
 
 state = 'idle'
@@ -88,7 +89,7 @@ def main():
 
     # Define button functionality
     gui.tab_hardware.on_hardware_scan(scan_for_hardware)
-    gui.tab_hardware.on_check_connection(check_connections)
+    gui.tab_hardware.on_check_connection(visa_display_resources)
     gui.bottom_bar.on_button_run(on_button_run)
     gui.bottom_bar.on_button_stop(abort_scan)
 
@@ -264,24 +265,6 @@ def scan_for_hardware():
     else:
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
     switches = Switches(visa_switches)
-
-
-def check_connections():
-    """Lists available resources and creates a popup to display them."""
-    visa_resource_manager = visa.ResourceManager()
-    r_list = visa_resource_manager.list_resources()
-    r_display = ''
-    for address in r_list:
-
-        try:
-            resource = visa_resource_manager.open_resource(address)
-            r_display = r_display + address + '\n\t' + resource.query('*IDN?') + '\n'
-        except visa.errors.VisaIOError:
-            r_display = r_display + address + '\n\t' + r'N\A' + '\n'
-    if len(r_list) == 0:
-        r_display = 'No resources found.'
-
-    gui.core.create_popup(r_display)
 
 
 def get_gui_parameters():
