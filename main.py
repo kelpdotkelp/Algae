@@ -12,6 +12,7 @@ import gui
 import device0
 import device1
 
+
 # TODO Remove PATH_VISA_LIBRARY
 
 def main():

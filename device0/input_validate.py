@@ -1,9 +1,19 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Provides error checking on user input.
+
+Author: Noah Stieler, 2023
+"""
+
 import os.path
 
 import gui
 
 
 def input_validate(vna, input_param):
+    """Checks all user input for errors/invalid entries"""
     valid = True
 
     if not (vna.data_point_count_range[0] <= input_param['num_points'][1] <= vna.data_point_count_range[1]):

@@ -1,3 +1,13 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Creates a popup window that lists all connected
+VISA resources.
+
+Author: Noah Stieler, 2023
+"""
+
 import pyvisa as visa
 
 import gui

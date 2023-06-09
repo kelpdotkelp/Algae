@@ -1,13 +1,30 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Manages VNA state and VNA communication.
+
+Hardware:
+    Keysight M9019A PXIe Chassis Gen3
+    Keysight M9037A PXIe High-Performance Embedded Controller
+    Keysight M9802A PXI Vector Network Analyzer, 6 Port (x4)
+
+Author: Noah Stieler, 2023
+"""
+
+import tkinter as tk
+
 import pyvisa as visa
 
 import gui
 from display_resources import visa_display_resources
+from .gui import calibration
 from .imaging import VNA
 
 state = 'idle'
 
-vna = None
-_e_vna = None
+vna = VNA(None)
+_entry_vna, _button_calib = None, None
 
 """
 Each key is an input parameter and the value is a list.
@@ -40,8 +57,14 @@ def main():
     gui.tab_hardware.on_check_connection(visa_display_resources)
 
     # Set up hardware gui
-    global _e_vna
-    _e_vna = gui.tab_hardware.add_hardware('VNA', default_value='change me!')
+    global _entry_vna, _button_calib
+    _entry_vna, _button_calib = gui.tab_hardware.add_hardware('VNA', default_value='change me!',
+                                                              action=True, action_name='Calibrate')
+    _button_calib.configure(command=calibration.create_popup)
+    _button_calib['state'] = tk.DISABLED
+
+    calibration.on_apply_calib = on_apply_calib
+    calibration.cal_list = ['A', 'B', 'C', 'D']
 
     while not gui.core.app_terminated:
         gui.core.update()
@@ -55,14 +78,24 @@ def scan_for_hardware():
     global vna
     visa_vna = None
 
-    if _e_vna.get() in r_list:
-        visa_vna = visa_resource_manager.open_resource(_e_vna.get())
-        gui.tab_hardware.set_indicator(0, 'Resource found.', 'green')
+    if _entry_vna.get() in r_list:
+        visa_vna = visa_resource_manager.open_resource(_entry_vna.get())
+        _button_calib['state'] = tk.ACTIVE
+        gui.tab_hardware.set_indicator(0, 'Resource found.', 'blue')
     else:
+        _button_calib['state'] = tk.DISABLED
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
     vna = VNA(visa_vna)
 
 
+def on_apply_calib():
+    """Stores the selected calibration and calibrates the VNA"""
+    vna.calibration = calibration.get_selected()
+    vna.calibrate()
+    gui.tab_hardware.set_indicator(0, 'Calibrated.', 'green')
+
+
+# Old test code, kept for command reference
 """def main():
     rm = visa.ResourceManager()
     address = rm.list_resources()[5]

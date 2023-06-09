@@ -1,3 +1,12 @@
+"""
+Algae ~ Automated Target Positioning System
+Electromagnetic Imaging Lab, University of Manitoba
+
+Handles file structure and JSON output.
+
+Author: Noah Stieler, 2023
+"""
+
 import os.path
 import json
 
@@ -18,6 +27,7 @@ _output = {
 
 
 def init_root(output_dir):
+    """Create root directory for output."""
     _output['pos'] = 0
     _output['dir_dest'] = output_dir
 

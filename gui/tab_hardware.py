@@ -17,30 +17,39 @@ _button_hw_scan, _button_c_connect = None, None
 _hardware_count = 0
 
 
-def add_hardware(display_name, default_value=''):
+def add_hardware(display_name, default_value='', action=False, action_name=''):
     global _hardware_count
-    padding_x = 15
+    padding_x = 7
     padding_y = 10
 
     _frame_hardware_box.rowconfigure(index=_hardware_count, weight=1)
 
-    new_frame = tk.Frame(_frame_hardware_box)
-    new_frame.grid(row=_hardware_count, column=0, pady=padding_y, sticky='nsew')
+    label = tk.Label(_frame_hardware_box, text=display_name)
+    label.grid(row=_hardware_count, column=0, padx=padding_x, pady=padding_y, sticky='w')
 
-    _status_indicators.append(tk.Label(new_frame, text=''))
-    _status_indicators[_hardware_count].pack(padx=padding_x, side=tk.LEFT)
-
-    tk.Label(new_frame, text=display_name).pack(padx=padding_x, side=tk.LEFT)
+    label = tk.Label(_frame_hardware_box, text='\tAddress: ')
+    label.grid(row=_hardware_count, column=1, padx=padding_x, pady=padding_y, sticky='w')
 
     text = tk.StringVar()
     text.set(default_value)
-    entry = tk.Entry(new_frame, textvariable=text, width=40, justify=tk.RIGHT)
-    entry.pack(padx=padding_x, side=tk.RIGHT)
-    tk.Label(new_frame, text='\t\t\tAddress: ').pack(padx=padding_x, side=tk.RIGHT)
+    entry = tk.Entry(_frame_hardware_box, textvariable=text, width=40, justify=tk.RIGHT)
+    entry.grid(row=_hardware_count, column=2, padx=padding_x, pady=padding_y)
+
+    button = None
+    if action:
+        button = ttk.Button(_frame_hardware_box, text=action_name)
+        button.grid(row=_hardware_count, column=3, padx=padding_x, pady=padding_y)
+        button['state'] = tk.DISABLED
+
+    _status_indicators.append(tk.Label(_frame_hardware_box, text=''))
+    _status_indicators[_hardware_count].grid(row=_hardware_count, column=4, padx=padding_x, pady=padding_y)
 
     _hardware_count += 1
 
-    return entry
+    if button is None:
+        return entry
+    else:
+        return entry, button
 
 
 def set_indicator(index, message, color):

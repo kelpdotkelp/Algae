@@ -32,7 +32,7 @@ port_refl = refl_range[0]
 PATH_VISA_LIBRARY = r'C:\Windows\system32\visa64.dll'
 
 vna, switches = VNA(None), Switches(None)
-_e_vna, _e_switches = None, None
+_entry_vna, _entry_switches = None, None
 
 """
 Each key is an input parameter and the value is a list.
@@ -83,9 +83,9 @@ def main():
     input_s_param['S21'][0].state(['selected'])
 
     # Set up hardware gui
-    global _e_vna, _e_switches
+    global _entry_vna, _entry_switches
     _e_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
-    _e_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
+    _entry_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
 
     # Define button functionality
     gui.tab_hardware.on_hardware_scan(scan_for_hardware)
@@ -252,15 +252,15 @@ def scan_for_hardware():
     global vna, switches
     visa_vna, visa_switches = None, None
 
-    if _e_vna.get() in r_list:
-        visa_vna = visa_resource_manager.open_resource(_e_vna.get())
+    if _entry_vna.get() in r_list:
+        visa_vna = visa_resource_manager.open_resource(_entry_vna.get())
         gui.tab_hardware.set_indicator(0, 'Resource found.', 'green')
     else:
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
     vna = VNA(visa_vna)
 
-    if _e_switches.get() in r_list:
-        visa_switches = visa_resource_manager.open_resource(_e_switches.get())
+    if _entry_switches.get() in r_list:
+        visa_switches = visa_resource_manager.open_resource(_entry_switches.get())
         gui.tab_hardware.set_indicator(1, 'Resource found.', 'green')
     else:
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
