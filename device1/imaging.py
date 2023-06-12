@@ -11,7 +11,8 @@ Hardware:
 
 Author: Noah Stieler, 2023
 """
-
+import threading
+import gui
 
 class VNA:
     PORT_RANGE = (1, 24)
@@ -19,13 +20,15 @@ class VNA:
 
     def __init__(self, resource):
         self.resource = resource
+        if self.resource is not None:
+            self.resource.timeout = 60 * 1000  # Time in milliseconds
+
         self.name = ''
 
         self.data_point_count = 5
         self.if_bandwidth = 5 * 100  # Hz
         self.freq_start = 10000000  # Hz
         self.freq_stop = 2 * 1000000000  # Hz
-        self.power = 0  # dBm -> confirm this unit
 
         self.data_point_count_range = ()
         self.if_bandwidth_range = ()
@@ -36,8 +39,7 @@ class VNA:
         self.calibration = ''
         self.calibration_list = []
 
-        if self.resource is not None:
-            self._set_calibration_list()
+        self._trigger_set = False
 
     def __del__(self):
         if self.resource is None:
@@ -47,29 +49,69 @@ class VNA:
     def initialize(self):
         """Set up VISA, trigger settings,
         and input parameters."""
-        self.resource.timeout = 60 * 1000  # Time in milliseconds
-
         self.name = self.resource.query('*IDN?')
 
-        self.write('SYSTEM:PRESET')
+        if self.calibration == '':
+            self.write('SYSTEM:PRESET')
 
         # Trigger set up
-        self.write('TRIGGER:SEQUENCE:SOURCE MANUAL')
-        self.write('SENSE1:SWEEP:MODE HOLD')
+        # Doing this every scan causes large slowdowns
+        if not self._trigger_set:
+            def cmd():
+                self.write('TRIGGER:SEQUENCE:SOURCE MANUAL')
+                self.write('INITIATE:CONTINUOUS OFF')
+                self.write('SENSE1:SWEEP:MODE CONTINUOUS')
+                self.write('SENSE1:SWEEP:TYPE LINEAR')
+                self.query('*OPC?')
 
-        self.query('*OPC?')
+            t = threading.Thread(target=cmd)
+            t.start()
+
+            gui.bottom_bar.message_display('Setting up measurement...', 'blue')
+            gui.bottom_bar.progress_bar.configure(mode='indeterminate')
+            gui.bottom_bar.progress_bar.start()
+            while t.is_alive():
+                gui.core.update()
+            t.join()
+            gui.bottom_bar.progress_bar.configure(mode='determinate')
+            gui.bottom_bar.progress_bar.stop()
+
+            self._trigger_set = True
 
         # Parameters
         self.write(f'SENSE1:SWEEP:POINTS {self.data_point_count}')
+        self.write(f'SENSE1:BANDWIDTH {self.if_bandwidth}')
+        self.write(f'SENSE1:FREQUENCY:START {self.freq_start}')
+        self.write(f'SENSE1:FREQUENCY:STOP {self.freq_stop}')
 
-    def _set_calibration_list(self):
+    def set_parameter_ranges(self):
+        self.data_point_count_range = (
+            int(self.query('SENSE1:SWEEP:POINTS? MIN')),
+            int(self.query('SENSE1:SWEEP:POINTS? MAX'))
+        )
+        self.if_bandwidth_range = (
+            float(self.query('SENSE1:BANDWIDTH? MIN')),
+            float(self.query('SENSE1:BANDWIDTH? MAX'))
+        )
+        self.freq_start_range = (
+            float(self.query('SENSE1:FREQUENCY:START? MIN')),
+            float(self.query('SENSE1:FREQUENCY:START? MAX'))
+        )
+        self.freq_stop_range = (
+            float(self.query('SENSE1:FREQUENCY:STOP? MIN')),
+            float(self.query('SENSE1:FREQUENCY:STOP? MAX'))
+        )
+
+    def set_calibration_list(self):
         """Query list of VNA calibrations and parse them."""
         cal = self.query('CSET:CATALOG?')
+        self.query('*OPC?')
         cal = cal.replace('\"', '')
         cal = cal.replace('\n', '')
         self.calibration_list = cal.split(',')
 
     def calibrate(self):
+        self.write('SYSTEM:PRESET')
         self.write('SENSE1:CORRECTION:CSET:ACTIVATE \'' + self.calibration + '\', 1')
         self.query('*OPC?')
 
@@ -83,7 +125,7 @@ class VNA:
         self.write('SENSE1:CORRECTION:CACHE:MODE 1')
 
         cmd = 'CALCULATE1:MEASURE1:DATA:SNP:PORTS:SAVE'
-        args = f' \'{VNA.port_list}\', \'{path}\', fast'
+        args = f' \'{VNA.port_list}\', \'{path}\\output.s24p\', fast'
         self.write(cmd + args)
 
         self.query('*OPC?')

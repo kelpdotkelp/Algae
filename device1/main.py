@@ -11,15 +11,20 @@ Hardware:
 
 Author: Noah Stieler, 2023
 """
-
+import threading
+import tkinter
 import tkinter as tk
 
 import pyvisa as visa
 
 import gui
+import out
 from display_resources import visa_display_resources
 from .gui import calibration
 from .imaging import VNA
+from .input_validate import input_validate
+
+VISA_ADDRESS_VNA = 'TCPIP0::Localhost::hislip0::INSTR'
 
 state = 'idle'
 
@@ -49,25 +54,81 @@ def main():
                                  0, 'Start frequency (Hz)']
     input_param['freq_stop'] = [gui.tab_home.add_parameter_num('Stop frequency (Hz)'),
                                 0, 'Stop frequency (Hz)']
-    input_param['power'] = [gui.tab_home.add_parameter_num('Power (dBm)'),
-                            0, 'Power (dBm)']
 
     # Define button functionality
+    gui.bottom_bar.on_button_run(on_button_run)
     gui.tab_hardware.on_hardware_scan(scan_for_hardware)
     gui.tab_hardware.on_check_connection(visa_display_resources)
 
     # Set up hardware gui
     global _entry_vna, _button_calib
-    _entry_vna, _button_calib = gui.tab_hardware.add_hardware('VNA', default_value='change me!',
+    _entry_vna, _button_calib = gui.tab_hardware.add_hardware('VNA', default_value=VISA_ADDRESS_VNA,
                                                               action=True, action_name='Calibrate')
     _button_calib.configure(command=calibration.create_popup)
     _button_calib['state'] = tk.DISABLED
 
     calibration.on_apply_calib = on_apply_calib
-    calibration.cal_list = ['A', 'B', 'C', 'D']
 
     while not gui.core.app_terminated:
         gui.core.update()
+        get_gui_parameters()
+
+        if state == 'idle':
+            pass
+        if state == 'scan':
+            t = threading.Thread(target=vna.fire)
+            t.start()
+
+            gui.bottom_bar.message_display('Scanning...', 'blue')
+            gui.bottom_bar.progress_bar.configure(mode='indeterminate')
+            gui.bottom_bar.progress_bar.start()
+
+            while t.is_alive():
+                gui.core.update()
+            t.join()
+
+            gui.bottom_bar.progress_bar.configure(mode='determinate')
+            gui.bottom_bar.progress_bar.stop()
+
+            gui.bottom_bar.message_display('Scan complete.', 'blue')
+            state = 'scan_finished'
+
+        if state == 'scan_finished':
+            vna.save_snp(out.output['full_path'])
+            gui.bottom_bar.message_display('Scan saved.', 'green')
+            state = 'idle'
+
+
+def on_button_run():
+    """Begins a scan.
+    Checks that hardware is connected and ready,
+    that all user input is valid. Assuming no errors,
+    state is changed to 'scan'."""
+
+    if vna.resource is None:
+        gui.bottom_bar.message_display('Hardware setup failed.', 'red')
+        return
+
+    vna.set_parameter_ranges()
+
+    valid = input_validate(vna, input_param)
+    if not valid:
+        return
+
+    gui.bottom_bar.message_clear()
+
+    """Initialize vna parameters"""
+    vna.data_point_count = int(input_param['num_points'][1])
+    vna.if_bandwidth = input_param['ifbw'][1]
+    vna.freq_start = input_param['freq_start'][1]
+    vna.freq_stop = input_param['freq_stop'][1]
+
+    vna.initialize()
+
+    out.init_root(gui.tab_home.get_output_dir())
+
+    global state
+    state = 'scan'
 
 
 def scan_for_hardware():
@@ -80,6 +141,7 @@ def scan_for_hardware():
 
     if _entry_vna.get() in r_list:
         visa_vna = visa_resource_manager.open_resource(_entry_vna.get())
+
         _button_calib['state'] = tk.ACTIVE
         gui.tab_hardware.set_indicator(0, 'Resource found.', 'blue')
     else:
@@ -87,12 +149,44 @@ def scan_for_hardware():
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
     vna = VNA(visa_vna)
 
+    if vna.resource is not None:
+        vna.set_calibration_list()  # Get calibrations from VNA
+        calibration.cal_list = vna.calibration_list  # Set them in the GUI
+
 
 def on_apply_calib():
     """Stores the selected calibration and calibrates the VNA"""
     vna.calibration = calibration.get_selected()
-    vna.calibrate()
+    # Done on thread to prevent gui from freezing
+    t = threading.Thread(target=vna.calibrate)
+    t.start()
+
+    gui.tab_hardware.set_indicator(0, 'Calibrating...', 'blue')
+    gui.bottom_bar.progress_bar.configure(mode='indeterminate')
+    gui.bottom_bar.progress_bar.start()
+    while t.is_alive():
+        gui.core.update()
+    t.join()
+    gui.bottom_bar.progress_bar.configure(mode='determinate')
+    gui.bottom_bar.progress_bar.stop()
+
     gui.tab_hardware.set_indicator(0, 'Calibrated.', 'green')
+
+
+def get_gui_parameters():
+    """Gets data from the tkinter widgets and updates all
+    the parameters. For numeric entries, if the input is invalid
+    the parameter is set to inf. This will correctly throw an
+    error when checking parameters."""
+    try:
+        for key in input_param:
+            input_param[key][1] = input_param[key][0].get()
+            try:
+                input_param[key][1] = float(input_param[key][1])
+            except ValueError:
+                input_param[key][1] = float('inf')
+    except tkinter.TclError:
+        pass
 
 
 # Old test code, kept for command reference

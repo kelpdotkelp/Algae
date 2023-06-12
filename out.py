@@ -17,7 +17,7 @@ _OUTPUT_JSON_INDENT = '\t'
 _open_files = {}
 
 # Manages where to write data to
-_output = {
+output = {
     'pos_index': 0,
     'root_name': 'algae_output',
     'dir_dest': '',  # Selected by the user
@@ -28,29 +28,29 @@ _output = {
 
 def init_root(output_dir):
     """Create root directory for output."""
-    _output['pos'] = 0
-    _output['dir_dest'] = output_dir
+    output['pos'] = 0
+    output['dir_dest'] = output_dir
 
     dir_created = False
     index = 0
     while not dir_created:
-        full_path = _output['dir_dest'] + '\\' + _output['root_name'] + f'_{index}'
+        full_path = output['dir_dest'] + '\\' + output['root_name'] + f'_{index}'
         if os.path.isdir(full_path):
             index += 1
         else:
-            _output['full_path'] = full_path
-            os.mkdir(_output['full_path'])
+            output['full_path'] = full_path
+            os.mkdir(output['full_path'])
             dir_created = True
 
 
 def mkdir_new_pos():
-    _output['dir_cur'] = _output['full_path'] + '\\pos' + str(_output['pos_index'])
-    os.mkdir(_output['dir_cur'])
-    _output['pos_index'] += 1
+    output['dir_cur'] = output['full_path'] + '\\pos' + str(output['pos_index'])
+    os.mkdir(output['dir_cur'])
+    output['pos_index'] += 1
 
 
 def out_file_init(s_parameter, meta, freqs):
-    f_name = _output['dir_cur'] + '\\' + s_parameter + '.json'
+    f_name = output['dir_cur'] + '\\' + s_parameter + '.json'
     _open_files[s_parameter] = open(f_name, 'w', encoding='utf-8')
 
     json_meta = json.dumps(meta, indent=_OUTPUT_JSON_INDENT)

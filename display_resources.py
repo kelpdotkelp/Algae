@@ -22,7 +22,10 @@ def visa_display_resources():
 
         try:
             resource = visa_resource_manager.open_resource(address)
-            r_display = r_display + address + '\n\t' + resource.query('*IDN?') + '\n'
+            if hasattr(resource, 'query'):
+                r_display = r_display + address + '\n\t' + resource.query('*IDN?') + '\n'
+            else:
+                r_display = r_display + address + '\n\t' + r'N\A' + '\n'
         except visa.errors.VisaIOError:
             r_display = r_display + address + '\n\t' + r'N\A' + '\n'
     if len(r_list) == 0:
