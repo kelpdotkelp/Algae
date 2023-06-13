@@ -16,10 +16,12 @@ _OUTPUT_JSON_INDENT = '\t'
 # Each key is an s-parameter ['S11', 'S12', 'S21', 'S22']
 _open_files = {}
 
+_root_default_name = 'algae_output'
+
 # Manages where to write data to
 output = {
     'pos_index': 0,
-    'root_name': 'algae_output',
+    'root_name': _root_default_name,
     'dir_dest': '',  # Selected by the user
     'full_path': '',  # Full path to root dir
     'dir_cur': ''
@@ -44,12 +46,14 @@ def init_root(output_dir):
 
 
 def mkdir_new_pos():
+    """Creates new directory in the root for a position."""
     output['dir_cur'] = output['full_path'] + '\\pos' + str(output['pos_index'])
     os.mkdir(output['dir_cur'])
     output['pos_index'] += 1
 
 
 def out_file_init(s_parameter, meta, freqs):
+    """Initializes .json files with header information."""
     f_name = output['dir_cur'] + '\\' + s_parameter + '.json'
     _open_files[s_parameter] = open(f_name, 'w', encoding='utf-8')
 
@@ -63,6 +67,7 @@ def out_file_init(s_parameter, meta, freqs):
 
 
 def out_file_data_write(s_parameter, tran, refl, list_real, list_imag, close_data):
+    """Writes a single sweep to .json files."""
     _open_files[s_parameter].write(_OUTPUT_JSON_INDENT + f'"t{tran}r{refl}"' + ': {\n')
     _open_files[s_parameter].write(
         2 * _OUTPUT_JSON_INDENT + '"real": ' + str(list_real) + ',\n')

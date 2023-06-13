@@ -13,10 +13,7 @@ import device0
 import device1
 
 
-# TODO Remove PATH_VISA_LIBRARY
-# TODO device0 vna_str_to_float is not needed.
-# Can probably change device0 data parsing too (cast to float)
-# TODO threads should disable buttons, use decorator for progress bar
+# TODO device1 setup documentation
 
 def main():
     gui.device_select.create_gui()

@@ -29,8 +29,6 @@ refl_range = (Switches.PORT_MIN, Switches.PORT_MAX)
 port_tran = tran_range[0]
 port_refl = refl_range[0]
 
-PATH_VISA_LIBRARY = r'C:\Windows\system32\visa64.dll'
-
 vna, switches = VNA(None), Switches(None)
 _entry_vna, _entry_switches = None, None
 
@@ -84,7 +82,7 @@ def main():
 
     # Set up hardware gui
     global _entry_vna, _entry_switches
-    _e_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
+    _entry_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
     _entry_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
 
     # Define button functionality
@@ -232,7 +230,6 @@ def on_button_run():
 
 def abort_scan():
     for s_parameter in vna.sp_to_measure:
-        """output_file_dict[s_parameter].close()"""
         out.out_file_complete(s_parameter)
 
     gui.bottom_bar.progress_bar_set(0)
@@ -247,7 +244,7 @@ def abort_scan():
 def scan_for_hardware():
     """Opens the vna and switches resources and checks there is a valid
     connection with them."""
-    visa_resource_manager = visa.ResourceManager(PATH_VISA_LIBRARY)
+    visa_resource_manager = visa.ResourceManager()
     r_list = visa_resource_manager.list_resources()
     global vna, switches
     visa_vna, visa_switches = None, None

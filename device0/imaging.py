@@ -17,8 +17,6 @@ Author: Noah Stieler, 2023
 import time
 import pyvisa as visa
 
-from .data_handler import vna_str_to_float
-
 
 class VNA:
 
@@ -151,20 +149,20 @@ class VNA:
             int(self.query('SENSE1:SWEEP:POINTS? MAX'))
         )
         self.if_bandwidth_range = (
-            vna_str_to_float(self.query('SENSE1:BANDWIDTH? MIN')),
-            vna_str_to_float(self.query('SENSE1:BANDWIDTH? MAX'))
+            float(self.query('SENSE1:BANDWIDTH? MIN')),
+            float(self.query('SENSE1:BANDWIDTH? MAX'))
         )
         self.freq_start_range = (
-            vna_str_to_float(self.query('SENSE1:FREQUENCY:START? MIN')),
-            vna_str_to_float(self.query('SENSE1:FREQUENCY:START? MAX'))
+            float(self.query('SENSE1:FREQUENCY:START? MIN')),
+            float(self.query('SENSE1:FREQUENCY:START? MAX'))
         )
         self.freq_stop_range = (
-            vna_str_to_float(self.query('SENSE1:FREQUENCY:STOP? MIN')),
-            vna_str_to_float(self.query('SENSE1:FREQUENCY:STOP? MAX'))
+            float(self.query('SENSE1:FREQUENCY:STOP? MIN')),
+            float(self.query('SENSE1:FREQUENCY:STOP? MAX'))
         )
         self.power_range = (
-            vna_str_to_float(self.query('SOURCE1:POWER1? MIN')),
-            vna_str_to_float(self.query('SOURCE1:POWER1? MAX'))
+            float(self.query('SOURCE1:POWER1? MIN')),
+            float(self.query('SOURCE1:POWER1? MAX'))
         )
 
 

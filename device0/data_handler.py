@@ -12,21 +12,13 @@ Author: Noah Stieler, 2023
 from datetime import date, datetime
 
 
-def vna_str_to_float(string):
-    """Converts string float format used by vna to
-    a float."""
-    sign = 1 if string[0] == '+' else -1
-    sign_exp = 1 if string[15] == '+' else -1
-    return sign * float(string[1:14]) * pow(10, sign_exp * int(string[16:19]))
-
-
 def format_data_one_sweep(str_points, freq_list):
     """Returns a list that contains lists of the real and imaginary
     components at each frequency."""
     float_points = str_points.split(',')
 
     for i in range(len(float_points)):
-        float_points[i] = vna_str_to_float(float_points[i])
+        float_points[i] = float(float_points[i])
 
     # Check to ensure no data is missing from vna
     if len(float_points) != 2 * len(freq_list):
