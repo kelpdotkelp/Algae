@@ -20,6 +20,7 @@ import pyvisa as visa
 import gui
 import out
 from display_resources import visa_display_resources
+from .data_handler import format_meta_data
 from .gui import calibration
 from .imaging import VNA
 from .input_validate import input_validate
@@ -88,6 +89,7 @@ def main():
             state = 'scan_finished'
 
         if state == 'scan_finished':
+            out.create_meta_file(format_meta_data(vna, gui.tab_home.get_description()))
             vna.save_snp(out.output['full_path'])
             gui.bottom_bar.message_display('Scan saved.', 'green')
             state = 'idle'

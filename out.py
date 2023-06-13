@@ -52,6 +52,15 @@ def init_root(output_dir, root_name):
             output['root_name'] = _root_default_name
 
 
+def create_meta_file(meta):
+    """meta should be a dict."""
+    file = open(output['full_path'] + '\\meta.json', 'w', encoding='utf-8')
+    json_meta = json.dumps(meta, indent=_OUTPUT_JSON_INDENT)
+    file.write('{\n')
+    file.write('\"meta\": ' + json_meta + '\n}')
+    file.close()
+
+
 def mkdir_new_pos():
     """Creates new directory in the root for a position."""
     output['dir_cur'] = output['full_path'] + '\\pos' + str(output['pos_index'])
