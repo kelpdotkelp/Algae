@@ -13,8 +13,6 @@ import device0
 import device1
 
 
-# TODO device1 setup documentation
-
 def main():
     gui.device_select.create_gui()
 

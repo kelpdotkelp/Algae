@@ -21,7 +21,8 @@ Uses the following hardware:
 
 ### Requirements
 
-Please install PyVISA by following the installation guide at:
+All devices require PyVISA. Please install it 
+by following the installation guide at:
 
 https://pyvisa.readthedocs.io/en/latest/introduction/getting.html
 
@@ -30,3 +31,28 @@ https://pyvisa.readthedocs.io/en/latest/introduction/getting.html
 NI-VISA: https://www.ni.com/en-ca/support/downloads/drivers/download.ni-visa.html#480875
 
 NI-488.2: https://www.ni.com/en-ca/support/downloads/drivers/download.ni-488-2.html#467646
+
+`device1` setup guide:
+
+Open 'Network Analyzer'
+
+System->System setup->Remote interface
+
+Enable HiSLIP
+
+Enable Legacy HiSLIP
+
+Open 'Connection Expert'
+
+LAN (TCIP0)->Add instrument
+
+Set hostname to Localhost
+
+Set protocol to HiSLIP
+
+Click Ok
+
+There should now be a VISA resource set up that PyVISA can
+interface with.
+
+'Network Analyzer' must be running for Algae to send commands to it.
