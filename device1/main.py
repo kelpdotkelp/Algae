@@ -43,6 +43,7 @@ input_param = {}
 def main():
     global state
 
+    gui.bottom_bar.enable_button_stop = False
     gui.core.create_gui()
 
     # Set up input parameters

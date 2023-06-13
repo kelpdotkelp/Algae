@@ -11,6 +11,8 @@ Author: Noah Stieler, 2023
 import tkinter as tk
 import tkinter.ttk as ttk
 
+enable_button_stop = True
+
 progress_bar = None
 _label_message = None
 _button_run, _button_stop = None, None
@@ -42,7 +44,8 @@ def create(frame_base):
     _button_stop = ttk.Button(frame_right, text='Stop', state=tk.DISABLED)
 
     _button_run.grid(row=0, column=0, padx=15)
-    _button_stop.grid(row=0, column=1, padx=15)
+    if enable_button_stop:
+        _button_stop.grid(row=0, column=1, padx=15)
 
 
 def message_display(message, color):
