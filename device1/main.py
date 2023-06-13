@@ -118,7 +118,7 @@ def on_button_run():
 
     vna.initialize()
 
-    out.init_root(gui.tab_home.get_output_dir())
+    out.init_root(gui.tab_home.get_output_dir(), gui.tab_home.get_name())
 
     global state
     state = 'scan'

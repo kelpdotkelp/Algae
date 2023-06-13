@@ -27,6 +27,7 @@ _parameter_row_count = 0
 _entry_file_path = None
 _button_file = None
 _text_desc = None
+_text_name = None
 
 
 def add_parameter_num(display_name):
@@ -135,13 +136,21 @@ def create(frame_content_base):
     _button_file.configure(command=_on_file_press)
     _button_file.grid(row=0, column=1)
 
+    # Name
+    label_name = tk.Label(frame_output_box, text='Name')
+    label_name.grid(row=2, column=0, padx=15, pady=5, sticky='w')
+
+    global _text_name
+    _text_name = tk.Entry(frame_output_box)
+    _text_name.grid(row=3, column=0, padx=15, pady=5, sticky='ew')
+
     # Description
     label_desc = tk.Label(frame_output_box, text='Description')
-    label_desc.grid(row=2, column=0, padx=15, pady=5, sticky='w')
+    label_desc.grid(row=4, column=0, padx=15, pady=5, sticky='w')
 
     global _text_desc
     _text_desc = tk.Entry(frame_output_box)
-    _text_desc.grid(row=3, column=0, padx=15, pady=5, sticky='ew')
+    _text_desc.grid(row=5, column=0, padx=15, pady=5, sticky='ew')
 
     """CANVAS"""
     frame_display.pack_propagate(False)
@@ -161,6 +170,10 @@ def get_output_dir():
 
 def get_description():
     return _text_desc.get()
+
+
+def get_name():
+    return _text_name.get()
 
 
 def draw_canvas(draw_func):

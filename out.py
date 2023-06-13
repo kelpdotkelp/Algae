@@ -28,21 +28,28 @@ output = {
 }
 
 
-def init_root(output_dir):
+def init_root(output_dir, root_name):
     """Create root directory for output."""
     output['pos'] = 0
     output['dir_dest'] = output_dir
+    output['root_name'] = root_name
 
     dir_created = False
     index = 0
     while not dir_created:
-        full_path = output['dir_dest'] + '\\' + output['root_name'] + f'_{index}'
-        if os.path.isdir(full_path):
-            index += 1
-        else:
+        try:
+            full_path = output['dir_dest'] + '\\' + output['root_name']
+            if index != 0:
+                full_path = full_path + f'_{index}'
+
+            os.mkdir(full_path)
             output['full_path'] = full_path
-            os.mkdir(output['full_path'])
+
             dir_created = True
+        except FileExistsError:
+            index += 1
+        except OSError:  # Invalid directory name
+            output['root_name'] = _root_default_name
 
 
 def mkdir_new_pos():

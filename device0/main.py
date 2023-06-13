@@ -210,7 +210,7 @@ def on_button_run():
     switches.initialize()
 
     """Initialize output file structure"""
-    out.init_root(gui.tab_home.get_output_dir())
+    out.init_root(gui.tab_home.get_output_dir(), gui.tab_home.get_name())
     out.mkdir_new_pos()
 
     for s_parameter in vna.sp_to_measure:
