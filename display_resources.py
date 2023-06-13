@@ -31,4 +31,4 @@ def visa_display_resources():
     if len(r_list) == 0:
         r_display = 'No resources found.'
 
-    gui.core.create_popup(r_display)
+    gui.core.create_popup(r_display, 'Resource Finder')

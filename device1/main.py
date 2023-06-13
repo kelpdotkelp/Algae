@@ -80,15 +80,8 @@ def main():
             t.start()
 
             gui.bottom_bar.message_display('Scanning...', 'blue')
-            gui.bottom_bar.progress_bar.configure(mode='indeterminate')
-            gui.bottom_bar.progress_bar.start()
 
-            while t.is_alive():
-                gui.core.update()
-            t.join()
-
-            gui.bottom_bar.progress_bar.configure(mode='determinate')
-            gui.bottom_bar.progress_bar.stop()
+            gui.core.update_during_thread_wait(t)
 
             gui.bottom_bar.message_display('Scan complete.', 'blue')
             state = 'scan_finished'
@@ -162,14 +155,7 @@ def on_apply_calib():
     t.start()
 
     gui.tab_hardware.set_indicator(0, 'Calibrating...', 'blue')
-    gui.bottom_bar.progress_bar.configure(mode='indeterminate')
-    gui.bottom_bar.progress_bar.start()
-    while t.is_alive():
-        gui.core.update()
-    t.join()
-    gui.bottom_bar.progress_bar.configure(mode='determinate')
-    gui.bottom_bar.progress_bar.stop()
-
+    gui.core.update_during_thread_wait(t)
     gui.tab_hardware.set_indicator(0, 'Calibrated.', 'green')
 
 

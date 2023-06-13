@@ -3,7 +3,7 @@ Algae is being designed to provide a user-friendly
 graphical application that can be extended to control multiple different electromagnetic imaging experiments. Algae automates
 the process of positioning the imaging target and scanning it in order to collect large datasets.
 
-`device0` - Scans the 2D cross section of the target (E3-522).
+`device0` - 2-Port VNA and 24-Port Switch (E3-522).
 
 Uses the following hardware:
 
@@ -11,7 +11,7 @@ Uses the following hardware:
 - Agilent 87050A Option K24 Multiport Test Set
 - National Instruments GPIB-USB adapter
 
-`device1` - Is the electromagnet scanner (E3-518).
+`device1` - 24-Port VNA (E3-518).
 
 Uses the following hardware:
 

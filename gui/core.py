@@ -91,10 +91,24 @@ def update():
     _root.update()
 
 
-def create_popup(message):
+def update_during_thread_wait(thread):
+    """This is updates the gui while main tasks are being waited on by a thread.
+    Gives the user indication that the program has not frozen but is waiting."""
+    bottom_bar.progress_bar.configure(mode='indeterminate')
+    bottom_bar.progress_bar.start()
+
+    while thread.is_alive():
+        update()
+    thread.join()
+
+    bottom_bar.progress_bar.configure(mode='determinate')
+    bottom_bar.progress_bar.stop()
+
+
+def create_popup(message, title):
     root = tk.Tk()
     root.resizable(False, False)
-    root.title('Resource Finder')
+    root.title(title)
     root.geometry(f'{650}x{200}+50+50')
 
     text = tk.Text(root)

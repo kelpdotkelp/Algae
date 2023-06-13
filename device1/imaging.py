@@ -14,6 +14,7 @@ Author: Noah Stieler, 2023
 import threading
 import gui
 
+
 class VNA:
     PORT_RANGE = (1, 24)
     port_list = ''
@@ -68,13 +69,7 @@ class VNA:
             t.start()
 
             gui.bottom_bar.message_display('Setting up measurement...', 'blue')
-            gui.bottom_bar.progress_bar.configure(mode='indeterminate')
-            gui.bottom_bar.progress_bar.start()
-            while t.is_alive():
-                gui.core.update()
-            t.join()
-            gui.bottom_bar.progress_bar.configure(mode='determinate')
-            gui.bottom_bar.progress_bar.stop()
+            gui.core.update_during_thread_wait(t)
 
             self._trigger_set = True
 
