@@ -28,7 +28,7 @@ tab_index = 0
 
 def _config_base_frames(tabs, frame_bottom_bar):
     """Configures the frames which holds the tabs and bottom menu bar."""
-    _root.rowconfigure(index=0, weight=10)
+    _root.rowconfigure(index=0, weight=15)
     _root.rowconfigure(index=1, weight=1)
     _root.columnconfigure(index=0, weight=1)
 
@@ -78,6 +78,9 @@ def create_gui():
 
     frame_tab_home = tab_home.create(_tab_control)
     frame_tab_hardware = tab_hardware.create(_tab_control)
+
+    frame_tab_home.grid_propagate(False)
+    frame_tab_hardware.grid_propagate(False)
 
     _tab_control.add(frame_tab_home, text='Home')
     _tab_control.add(frame_tab_hardware, text='Hardware')

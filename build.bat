@@ -3,7 +3,7 @@ rmdir /s dist /Q
 del *.spec
 
 pyinstaller main.py ^
-    --name Algae_test ^
+    --name Algae ^
     --add-data "res/*.png;res/" ^
     --noconsole ^
     --icon "res/icon.ico"

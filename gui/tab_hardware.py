@@ -52,40 +52,48 @@ def add_hardware(display_name, default_value='', action=False, action_name=''):
         return entry, button
 
 
-def set_indicator(index, message, color):
-    _status_indicators[index].configure(text=message, foreground=color)
-
-
 def create(frame_content_base):
+    pady_head = 15
+    pady = 10
+
     frame_page_base = tk.Frame(frame_content_base)
-
-    frame_hardware = tk.Frame(frame_page_base)
-
     frame_page_base.rowconfigure(index=0, weight=1)
     frame_page_base.columnconfigure(index=0, weight=1)
-    frame_hardware.grid(row=0, column=0, sticky='new')
+
+    # Holds all widgets
+    frame_hardware = tk.Frame(frame_page_base)
+    frame_hardware.grid(padx=50, pady=25, row=0, column=0, sticky='new')
 
     label_hardware = tk.Label(frame_hardware, text='Hardware Setup',
                               background=frame_hardware['background'],
                               font=('Arial', 12))
-    label_hardware.pack(padx=50, pady=(60, 10), anchor='w')
+    label_hardware.pack(pady=(pady_head, pady), anchor='w')
 
     global _frame_hardware_box
     _frame_hardware_box = tk.Frame(frame_hardware, width=400, height=300,
                                    borderwidth=3, relief=tk.SUNKEN)
-    _frame_hardware_box.pack(padx=50, anchor='w')
+    _frame_hardware_box.pack(anchor='w')
 
-    global _button_hw_scan, _button_c_connect
     frame_buttons = tk.Frame(frame_hardware)
     frame_buttons.rowconfigure(index=0, weight=1)
     frame_buttons.columnconfigure(index=1, weight=1)
-    frame_buttons.pack(padx=50, pady=15, anchor='w')
+    frame_buttons.pack(pady=pady, anchor='w')
 
+    global _button_hw_scan, _button_c_connect
     _button_hw_scan = ttk.Button(frame_buttons, text='Scan for hardware')
     _button_c_connect = ttk.Button(frame_buttons, text='Check for connections')
 
     _button_hw_scan.grid(row=0, column=0)
     _button_c_connect.grid(row=0, column=1, padx=15)
+
+    label_hardware = tk.Label(frame_hardware, text='Positioning',
+                              background=frame_hardware['background'],
+                              font=('Arial', 12))
+    label_hardware.pack(pady=(pady_head, pady), anchor='w')
+
+    frame_pos_box = tk.Frame(frame_hardware, width=400, height=300,
+                             borderwidth=3, relief=tk.SUNKEN)
+    frame_pos_box.pack(anchor='w')
 
     return frame_page_base
 
@@ -96,3 +104,7 @@ def on_hardware_scan(function):
 
 def on_check_connection(function):
     _button_c_connect.configure(command=function)
+
+
+def set_indicator(index, message, color):
+    _status_indicators[index].configure(text=message, foreground=color)
