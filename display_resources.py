@@ -13,7 +13,7 @@ import pyvisa as visa
 import gui
 
 
-def visa_display_resources():
+def visa_display_resources() -> None:
     """Lists available resources and creates a popup to display them."""
     visa_resource_manager = visa.ResourceManager()
     r_list = visa_resource_manager.list_resources()

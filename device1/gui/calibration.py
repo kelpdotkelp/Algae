@@ -17,7 +17,7 @@ _root = None
 _listbox = None
 
 
-def create_popup():
+def create_popup() -> None:
     """Creates listbox window."""
     global _root, _listbox
     _root = tk.Tk()
@@ -52,21 +52,21 @@ def create_popup():
     button.grid(row=1, column=0, padx=20, pady=10, sticky='e')
 
 
-def get_selected():
+def get_selected() -> str:
     """Returns the selected listbox entry."""
-    if _listbox.curselection() is not ():
+    if _listbox.curselection() != ():
         return cal_list[_listbox.curselection()[0]]
     else:
         return ''
 
 
-def _on_closing():
+def _on_closing() -> None:
     global _root, _listbox
     _root.destroy()
     _root = None
     _listbox = None
 
 
-def _on_closing_button():
+def _on_closing_button() -> None:
     on_apply_calib()
     _on_closing()

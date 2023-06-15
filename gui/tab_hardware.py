@@ -10,6 +10,7 @@ Author: Noah Stieler, 2023
 
 import tkinter as tk
 import tkinter.ttk as ttk
+import types
 
 _frame_hardware_box = None
 _status_indicators = []
@@ -17,7 +18,8 @@ _button_hw_scan, _button_c_connect = None, None
 _hardware_count = 0
 
 
-def add_hardware(display_name, default_value='', action=False, action_name=''):
+def add_hardware(display_name: str, default_value: str = '',
+                 action: bool = False, action_name: str = '') -> tuple:
     global _hardware_count
     padding_x = 7
     padding_y = 10
@@ -52,7 +54,7 @@ def add_hardware(display_name, default_value='', action=False, action_name=''):
         return entry, button
 
 
-def create(frame_content_base):
+def create(frame_content_base: tk.Frame) -> tk.Frame:
     pady_head = 15
     pady = 10
 
@@ -98,13 +100,13 @@ def create(frame_content_base):
     return frame_page_base
 
 
-def on_hardware_scan(function):
+def on_hardware_scan(function: types.FunctionType) -> None:
     _button_hw_scan.configure(command=function)
 
 
-def on_check_connection(function):
+def on_check_connection(function: types.FunctionType) -> None:
     _button_c_connect.configure(command=function)
 
 
-def set_indicator(index, message, color):
+def set_indicator(index: int, message: str, color: str) -> None:
     _status_indicators[index].configure(text=message, foreground=color)

@@ -28,7 +28,7 @@ output = {
 }
 
 
-def init_root(output_dir, root_name):
+def init_root(output_dir: str, root_name: str) -> None:
     """Create root directory for output."""
     output['pos'] = 0
     output['dir_dest'] = output_dir
@@ -52,8 +52,7 @@ def init_root(output_dir, root_name):
             output['root_name'] = _root_default_name
 
 
-def create_meta_file(meta):
-    """meta should be a dict."""
+def create_meta_file(meta: dict) -> None:
     file = open(output['full_path'] + '\\meta.json', 'w', encoding='utf-8')
     json_meta = json.dumps(meta, indent=_OUTPUT_JSON_INDENT)
     file.write('{\n')
@@ -61,14 +60,14 @@ def create_meta_file(meta):
     file.close()
 
 
-def mkdir_new_pos():
+def mkdir_new_pos() -> None:
     """Creates new directory in the root for a position."""
     output['dir_cur'] = output['full_path'] + '\\pos' + str(output['pos_index'])
     os.mkdir(output['dir_cur'])
     output['pos_index'] += 1
 
 
-def out_file_init(s_parameter, meta, freqs):
+def out_file_init(s_parameter: str, meta: dict, freqs: list) -> None:
     """Initializes .json files with header information."""
     f_name = output['dir_cur'] + '\\' + s_parameter + '.json'
     _open_files[s_parameter] = open(f_name, 'w', encoding='utf-8')
@@ -82,13 +81,14 @@ def out_file_init(s_parameter, meta, freqs):
     _open_files[s_parameter].write('"data": {\n')
 
 
-def out_file_data_write(s_parameter, tran, refl, list_real, list_imag, close_data):
+def out_file_data_write(s_parameter: str, tran: int, refl: int,
+                        real: list, imag: list, close_data: bool) -> None:
     """Writes a single sweep to .json files."""
     _open_files[s_parameter].write(_OUTPUT_JSON_INDENT + f'"t{tran}r{refl}"' + ': {\n')
     _open_files[s_parameter].write(
-        2 * _OUTPUT_JSON_INDENT + '"real": ' + str(list_real) + ',\n')
+        2 * _OUTPUT_JSON_INDENT + '"real": ' + str(real) + ',\n')
     _open_files[s_parameter].write(
-        2 * _OUTPUT_JSON_INDENT + '"imag": ' + str(list_imag))
+        2 * _OUTPUT_JSON_INDENT + '"imag": ' + str(imag))
 
     if close_data:
         _open_files[s_parameter].write('\n' + 2 * _OUTPUT_JSON_INDENT + '}\n}')
@@ -96,6 +96,6 @@ def out_file_data_write(s_parameter, tran, refl, list_real, list_imag, close_dat
         _open_files[s_parameter].write('\n' + 2 * _OUTPUT_JSON_INDENT + '},\n')
 
 
-def out_file_complete(s_parameter):
+def out_file_complete(s_parameter: str) -> None:
     _open_files[s_parameter].write('\n}')  # Required for JSON formatting
     _open_files[s_parameter].close()

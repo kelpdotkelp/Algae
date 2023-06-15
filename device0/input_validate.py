@@ -10,9 +10,10 @@ Author: Noah Stieler, 2023
 import os.path
 
 import gui
+from .imaging import VNA
 
 
-def input_validate(vna, input_param):
+def input_validate(vna: VNA, input_param: dict) -> bool:
     """Checks all user input for errors/invalid entries"""
     valid = True
 

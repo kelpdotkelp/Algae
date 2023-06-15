@@ -20,7 +20,7 @@ import pyvisa as visa
 
 class VNA:
 
-    def __init__(self, resource):
+    def __init__(self, resource: visa.Resource):
         self.resource = resource
         self.name = ""
 
@@ -51,12 +51,12 @@ class VNA:
         except visa.errors.InvalidSession:
             pass
 
-    def close(self):
+    def close(self) -> None:
         # Sending *RST prevents vna software crash
         self.write('*RST')
         self.resource.close()
 
-    def initialize(self):
+    def initialize(self) -> None:
         self.resource.read_termination = '\n'
         self.resource.write_termination = '\n'
 
@@ -90,7 +90,7 @@ class VNA:
         # Extra important if data_point_count is large.
         self.resource.timeout = 100 * 1000  # time in milliseconds
 
-    def display_on(self, setting):
+    def display_on(self, setting: bool) -> None:
         """Old software said VNA runs faster with display off,
         as mentioned in programming guide"""
         if setting:
@@ -98,13 +98,13 @@ class VNA:
         else:
             self.write('DISPLAY:VISIBLE OFF')
 
-    def write(self, cmd):
+    def write(self, cmd: str) -> None:
         self.resource.write(cmd)
 
-    def query(self, cmd):
+    def query(self, cmd: str) -> str:
         return self.resource.query(cmd)
 
-    def fire(self):
+    def fire(self) -> dict:
         """Trigger the VNA and return the data it collected."""
         self.write('INIT:IMM')
         # self.write('*WAI')  # *OPC? might be better because it stops the controller from attempting a read
@@ -118,7 +118,7 @@ class VNA:
 
         return output
 
-    def _freq_list_linspace(self):
+    def _freq_list_linspace(self) -> list:
         """Returns a list of the frequencies the VNA is sampling at."""
         list_out = []
         inc = (self.freq_stop - self.freq_start) / (self.data_point_count - 1)
@@ -126,7 +126,7 @@ class VNA:
             list_out.append(self.freq_start + i * inc)
         return list_out
 
-    def set_parameter_ranges(self):
+    def set_parameter_ranges(self) -> None:
         """Gets all valid parameter ranges from the VNA.
         this is used when the 'run' button is pressed to ensure the
         user submitted valid data."""
@@ -175,7 +175,7 @@ class Switches:
 
     debounce_time = 0.03  # seconds
 
-    def __init__(self, resource):
+    def __init__(self, resource: visa.Resource):
         self.resource = resource
 
     def __del__(self):
@@ -189,13 +189,13 @@ class Switches:
         except visa.errors.InvalidSession:
             pass
 
-    def close(self):
+    def close(self) -> None:
         self.resource.close()
 
-    def initialize(self):
+    def initialize(self) -> None:
         self.write('*rst')  # reset
 
-    def set_tran(self, port):
+    def set_tran(self, port: int) -> None:
         """Port indices are 1-24 inclusive"""
         if port < Switches.PORT_MIN or port > Switches.PORT_MAX:
             raise SwitchInvalidPortException(port)
@@ -203,7 +203,7 @@ class Switches:
         self.write(f'tran_{Switches.pad_port_number(port)};')
         time.sleep(Switches.debounce_time)
 
-    def set_refl(self, port):
+    def set_refl(self, port: int) -> None:
         """Port indices are 1-24 inclusive"""
         if port < Switches.PORT_MIN or port > Switches.PORT_MAX:
             raise SwitchInvalidPortException(port)
@@ -211,11 +211,11 @@ class Switches:
         self.write(f'refl_{Switches.pad_port_number(port)}')
         time.sleep(Switches.debounce_time)
 
-    def write(self, cmd):
+    def write(self, cmd: str) -> None:
         self.resource.write(cmd)
 
     @staticmethod
-    def pad_port_number(port):
+    def pad_port_number(port: int) -> str:
         """If the port is less than 9, it must be padded with a
         leading 0 in the command"""
         if port <= 9:
@@ -231,6 +231,6 @@ class SwitchInvalidPortException(Exception):
     def __init__(self, attempted_port):
         self.attempted_port = attempted_port
 
-    def display_message(self):
+    def display_message(self) -> None:
         print(f'SwitchInvalidPortException:'
               f'\n\tPort {self.attempted_port} is invalid.')

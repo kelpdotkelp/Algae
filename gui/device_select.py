@@ -10,6 +10,7 @@ Author: Noah Stieler, 2023
 
 import tkinter as tk
 import tkinter.ttk as ttk
+import types
 
 _ASPECT_RATIO = 4 / 3
 _HEIGHT = 450
@@ -20,7 +21,7 @@ _root = None
 _frame_base = None
 
 
-def create_gui():
+def create_gui() -> None:
     _create_window()
 
     global _frame_base
@@ -33,8 +34,9 @@ def create_gui():
     label.pack(anchor='w')
 
 
-def add_device(func_on_press, display_name='Device'):
-    def transition():
+def add_device(func_on_press: types.FunctionType,
+               display_name: str = 'Device') -> None:
+    def transition() -> None:
         _on_closing()
         func_on_press()
 
@@ -42,12 +44,12 @@ def add_device(func_on_press, display_name='Device'):
     button.pack(pady=8, fill=tk.X)
 
 
-def update():
+def update() -> None:
     _root.update_idletasks()
     _root.update()
 
 
-def _create_window():
+def _create_window() -> None:
     """Creates main application window."""
     global _root
 
@@ -62,7 +64,7 @@ def _create_window():
     _root.iconphoto(True, icon)
 
 
-def _on_closing():
+def _on_closing() -> None:
     _root.destroy()
     global app_terminated
     app_terminated = True

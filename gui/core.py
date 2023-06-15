@@ -10,6 +10,7 @@ Author: Noah Stieler, 2023
 import tkinter
 import tkinter as tk
 import tkinter.ttk as ttk
+from threading import Thread
 
 import gui.tab_home as tab_home
 import gui.tab_hardware as tab_hardware
@@ -26,7 +27,7 @@ _tab_control = None
 tab_index = 0
 
 
-def _config_base_frames(tabs, frame_bottom_bar):
+def _config_base_frames(tabs: tk.Frame, frame_bottom_bar: tk.Frame) -> None:
     """Configures the frames which holds the tabs and bottom menu bar."""
     _root.rowconfigure(index=0, weight=15)
     _root.rowconfigure(index=1, weight=1)
@@ -41,11 +42,11 @@ def _config_base_frames(tabs, frame_bottom_bar):
     frame_bottom_bar.grid_propagate(False)
 
 
-def _create_window():
+def _create_window() -> None:
     """Creates main application window."""
     global _root
 
-    def on_closing():
+    def on_closing() -> None:
         _root.destroy()
         global app_terminated
         app_terminated = True
@@ -64,7 +65,7 @@ def _create_window():
         pass
 
 
-def create_gui():
+def create_gui() -> None:
     _create_window()
 
     frame_tabs = tk.Frame(_root)
@@ -89,12 +90,12 @@ def create_gui():
     _tab_control.select(tab_index)
 
 
-def update():
+def update() -> None:
     _root.update_idletasks()
     _root.update()
 
 
-def update_during_thread_wait(thread):
+def update_during_thread_wait(thread: Thread) -> None:
     """This is updates the gui while main tasks are being waited on by a thread.
     Gives the user indication that the program has not frozen but is waiting."""
     bottom_bar.progress_bar.configure(mode='indeterminate')
@@ -108,7 +109,7 @@ def update_during_thread_wait(thread):
     bottom_bar.progress_bar.stop()
 
 
-def create_popup(message, title):
+def create_popup(message: str, title: str) -> None:
     root = tk.Tk()
     root.resizable(False, False)
     root.title(title)
@@ -120,6 +121,6 @@ def create_popup(message, title):
     text.pack()
 
 
-def _on_tab_change(event):
+def _on_tab_change(event) -> None:
     global tab_index
     tab_index = _tab_control.index(_tab_control.select())

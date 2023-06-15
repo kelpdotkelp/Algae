@@ -9,8 +9,10 @@ Author: Noah Stieler, 2023
 
 from datetime import date, datetime
 
+from .imaging import VNA
 
-def format_meta_data(vna, description, posx=0, posy=0):
+
+def format_meta_data(vna: VNA, description: str, posx=0, posy=0) -> dict:
     """Returns the correctly structured dictionary that can later
     be incorporated into JSON format"""
     out_dict = {

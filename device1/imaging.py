@@ -11,6 +11,8 @@ Hardware:
 
 Author: Noah Stieler, 2023
 """
+import pyvisa
+
 import threading
 import gui
 
@@ -19,7 +21,7 @@ class VNA:
     PORT_RANGE = (1, 24)
     port_list = ''
 
-    def __init__(self, resource):
+    def __init__(self, resource: pyvisa.Resource):
         self.resource = resource
         if self.resource is not None:
             self.resource.timeout = 60 * 1000  # Time in milliseconds
@@ -47,7 +49,7 @@ class VNA:
             return
         self.resource.close()
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Set up VISA, trigger settings,
         and input parameters."""
         self.name = self.resource.query('*IDN?')
@@ -79,7 +81,7 @@ class VNA:
         self.write(f'SENSE1:FREQUENCY:START {self.freq_start}')
         self.write(f'SENSE1:FREQUENCY:STOP {self.freq_stop}')
 
-    def set_parameter_ranges(self):
+    def set_parameter_ranges(self) -> None:
         self.data_point_count_range = (
             int(self.query('SENSE1:SWEEP:POINTS? MIN')),
             int(self.query('SENSE1:SWEEP:POINTS? MAX'))
@@ -97,7 +99,7 @@ class VNA:
             float(self.query('SENSE1:FREQUENCY:STOP? MAX'))
         )
 
-    def set_calibration_list(self):
+    def set_calibration_list(self) -> None:
         """Query list of VNA calibrations and parse them."""
         cal = self.query('CSET:CATALOG?')
         self.query('*OPC?')
@@ -105,16 +107,16 @@ class VNA:
         cal = cal.replace('\n', '')
         self.calibration_list = cal.split(',')
 
-    def calibrate(self):
+    def calibrate(self) -> None:
         self.write('SYSTEM:PRESET')
         self.write('SENSE1:CORRECTION:CSET:ACTIVATE \'' + self.calibration + '\', 1')
         self.query('*OPC?')
 
-    def fire(self):
+    def fire(self) -> None:
         self.write('INITIATE1:IMMEDIATE')
         self.query('*OPC?')
 
-    def save_snp(self, path):
+    def save_snp(self, path: str) -> None:
         """Writes VNA data to a .s24p at path"""
         # Manual wants this for .snp save command
         self.write('SENSE1:CORRECTION:CACHE:MODE 1')
@@ -125,14 +127,14 @@ class VNA:
 
         self.query('*OPC?')
 
-    def write(self, cmd):
+    def write(self, cmd: str) -> None:
         self.resource.write(cmd)
 
-    def query(self, cmd):
+    def query(self, cmd: str) -> str:
         return self.resource.query(cmd)
 
     @staticmethod
-    def set_port_list():
+    def set_port_list() -> None:
         """Creates comma delimited list of ports,
         needed for save_snp command."""
         VNA.port_list = ''

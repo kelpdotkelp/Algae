@@ -10,6 +10,7 @@ Author: Noah Stieler, 2023
 
 import tkinter as tk
 import tkinter.ttk as ttk
+import types
 
 enable_button_stop = True
 
@@ -18,7 +19,7 @@ _label_message = None
 _button_run, _button_stop = None, None
 
 
-def create(frame_base):
+def create(frame_base: tk.Frame) -> None:
     frame_base.rowconfigure(index=0, weight=1)
     frame_base.columnconfigure(index=0, weight=1)
     frame_base.columnconfigure(index=1, weight=0)
@@ -48,29 +49,29 @@ def create(frame_base):
         _button_stop.grid(row=0, column=1, padx=15)
 
 
-def message_display(message, color):
+def message_display(message: str, color: str) -> None:
     _label_message.config(text=message, foreground=color)
 
 
-def message_clear():
+def message_clear() -> None:
     _label_message.config(text='')
 
 
-def on_button_run(function):
+def on_button_run(function: types.FunctionType) -> None:
     _button_run.configure(command=function)
 
 
-def on_button_stop(function):
+def on_button_stop(function: types.FunctionType) -> None:
     _button_stop.configure(command=function)
 
 
-def toggle_button_stop():
+def toggle_button_stop() -> None:
     if str(_button_stop['state']) == tk.DISABLED:
         _button_stop['state'] = tk.ACTIVE
     else:
         _button_stop['state'] = tk.DISABLED
 
 
-def progress_bar_set(value):
+def progress_bar_set(value) -> None:
     """value ranges from 0 to 1"""
     progress_bar['value'] = 100 * value

@@ -11,8 +11,10 @@ Author: Noah Stieler, 2023
 
 from datetime import date, datetime
 
+from .imaging import VNA
 
-def format_data_one_sweep(str_points, freq_list):
+
+def format_data_one_sweep(str_points: str, freq_list: list) -> list:
     """Returns a list that contains lists of the real and imaginary
     components at each frequency."""
     float_points = str_points.split(',')
@@ -34,7 +36,8 @@ def format_data_one_sweep(str_points, freq_list):
     return measurement_set
 
 
-def format_meta_data(vna, s_parameter, description, posx=0, posy=0):
+def format_meta_data(vna: VNA, s_parameter: str, description: str,
+                     posx: float = 0, posy: float = 0) -> dict:
     """Returns the correctly structured dictionary that can later
     be incorporated into JSON format"""
     out_dict = {
@@ -57,11 +60,11 @@ def format_meta_data(vna, s_parameter, description, posx=0, posy=0):
 class MissingDataException(Exception):
     """Raised when the parsed vna data does not match two floats per frequency"""
 
-    def __init__(self, actual_num_count, expected_num_count):
+    def __init__(self, actual_num_count: int, expected_num_count: int):
         self.actual_num_count = actual_num_count
         self.expected_num_count = expected_num_count
 
-    def get_message(self):
+    def get_message(self) -> str:
         msg = f'MissingDataException:\n\texpected {self.expected_num_count} floating point numbers' \
               f'\n\treceived from vna {self.actual_num_count} floating point numbers'
         return msg

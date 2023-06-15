@@ -59,7 +59,7 @@ Thrown by: pyvisa/highlevel.py
 """
 
 
-def main():
+def main() -> None:
     global state
 
     gui.core.create_gui()
@@ -152,7 +152,7 @@ def main():
             state = 'idle'
 
 
-def update_ports():
+def update_ports() -> bool:
     """Cycles the trans and refl port of the switches.
     Returns a bool to indicate when all trans/refl pairs have
     been cycled through. Also updates canvas info."""
@@ -174,7 +174,7 @@ def update_ports():
     return is_complete
 
 
-def on_button_run():
+def on_button_run() -> None:
     """Begins a scan.
     Checks that hardware is connected and ready,
     that all user input is valid, and sets up output directory and files.
@@ -228,7 +228,7 @@ def on_button_run():
     state = 'scan'
 
 
-def abort_scan():
+def abort_scan() -> None:
     for s_parameter in vna.sp_to_measure:
         out.out_file_complete(s_parameter)
 
@@ -241,7 +241,7 @@ def abort_scan():
     state = 'idle'
 
 
-def scan_for_hardware():
+def scan_for_hardware() -> None:
     """Opens the vna and switches resources and checks there is a valid
     connection with them."""
     visa_resource_manager = visa.ResourceManager()
@@ -264,7 +264,7 @@ def scan_for_hardware():
     switches = Switches(visa_switches)
 
 
-def get_gui_parameters():
+def get_gui_parameters() -> None:
     """Gets data from the tkinter widgets and
     updates all the parameters. For numeric entries,
     if the input is invalid, the parameter is set to inf.
@@ -286,7 +286,7 @@ def get_gui_parameters():
         pass
 
 
-def update_progress_bar():
+def update_progress_bar() -> None:
     try:
         pair_count = tran_range[1] * (refl_range[1] - 1)
         gui.bottom_bar.progress_bar_set((port_tran * 24 - 1 + port_refl) / pair_count)
@@ -294,7 +294,7 @@ def update_progress_bar():
         pass
 
 
-def _debug_play_graphics():
+def _debug_play_graphics() -> None:
     import time
     update_ports()
     update_progress_bar()

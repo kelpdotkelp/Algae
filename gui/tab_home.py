@@ -15,6 +15,7 @@ Author: Noah Stieler, 2023
 """
 
 import tkinter as tk
+import types
 from tkinter import filedialog
 import tkinter.ttk as ttk
 
@@ -30,7 +31,7 @@ _text_desc = None
 _text_name = None
 
 
-def add_parameter_num(display_name):
+def add_parameter_num(display_name: str) -> tk.Entry:
     global _parameter_row_count
     padding_x = 15
     padding_y = 10
@@ -49,7 +50,7 @@ def add_parameter_num(display_name):
     return entry
 
 
-def add_parameter_checkbox(display_name_list):
+def add_parameter_checkbox(display_name_list: list) -> dict:
     global _parameter_row_count
 
     _frame_parameter_box.rowconfigure(index=_parameter_row_count, weight=1)
@@ -74,7 +75,7 @@ def add_parameter_checkbox(display_name_list):
     return checkbox_list
 
 
-def create(frame_content_base):
+def create(frame_content_base: tk.Frame) -> tk.Frame:
     # Set up input and display frames
     frame_page_base = tk.Frame(frame_content_base)
 
@@ -164,19 +165,19 @@ def create(frame_content_base):
     return frame_page_base
 
 
-def get_output_dir():
+def get_output_dir() -> None:
     return _entry_file_path.get()
 
 
-def get_description():
+def get_description() -> None:
     return _text_desc.get()
 
 
-def get_name():
+def get_name() -> None:
     return _text_name.get()
 
 
-def draw_canvas(draw_func):
+def draw_canvas(draw_func: types.FunctionType) -> None:
     """Wrapper function for drawing to the canvas.
     Performs all the needed checks before drawing so draw_func
     only needs to code to render images."""
@@ -192,14 +193,14 @@ def draw_canvas(draw_func):
         pass
 
 
-def _on_file_press():
+def _on_file_press() -> None:
     output_dir = filedialog.askdirectory()
     text = tk.StringVar()
     text.set(output_dir)
     _entry_file_path.config(textvariable=text)
 
 
-def _canvas_resize(event):
+def _canvas_resize(event) -> None:
     """Keeps the canvas square regardless of container dimensions."""
     pad = 50
 

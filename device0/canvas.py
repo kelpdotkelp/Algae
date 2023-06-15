@@ -33,7 +33,7 @@ for j in range(0, Switches.PORT_MAX):
     _port_state.append(0)
 
 
-def update():
+def update() -> None:
     if not _init:
         _init_draw()
 
@@ -51,7 +51,7 @@ def update():
         gui.tab_home.canvas.itemconfigure(_line_list[i], fill=fill)
 
 
-def _init_draw():
+def _init_draw() -> None:
     global _line_list, _init
 
     dim = gui.tab_home.canvas_size
@@ -75,14 +75,15 @@ def _init_draw():
     _init = True
 
 
-def _create_circle(x, y, radius, width, outline='#2E2E2E', fill=_background_color):
+def _create_circle(x: float, y: float, radius: float, width: float,
+                   outline: str = '#2E2E2E', fill: str = _background_color) -> None:
     """Because tkinter only supports
     drawing ovals with upper-left and bottom-right coors?"""
     gui.tab_home.canvas.create_oval(x - radius, y - radius, x + radius, y + radius,
                                     fill=fill, outline=outline, width=width)
 
 
-def port_reset():
+def port_reset() -> None:
     global _tran, _refl
     for i in range(0, Switches.PORT_MAX):
         _port_state[i] = 0
@@ -90,11 +91,11 @@ def port_reset():
     _refl = -1
 
 
-def port_complete(port):
+def port_complete(port: int) -> None:
     _port_state[port - 1] = 1
 
 
-def port_pair(tran, refl):
+def port_pair(tran: int, refl: int) -> None:
     global _tran, _refl
     _tran = tran - 1
     _refl = refl - 1
