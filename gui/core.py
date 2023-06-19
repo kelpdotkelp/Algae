@@ -111,14 +111,15 @@ def update_during_thread_wait(thread: Thread) -> None:
 
 def create_popup(message: str, title: str) -> None:
     root = tk.Tk()
-    root.resizable(False, False)
     root.title(title)
-    root.geometry(f'{650}x{200}+50+50')
+    root.pack_propagate(True)
 
     text = tk.Text(root)
     text.insert('1.0', message)
     text['state'] = tk.DISABLED
     text.pack()
+
+    root.resizable(False, False)
 
 
 def _on_tab_change(event) -> None:

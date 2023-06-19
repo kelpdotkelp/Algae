@@ -7,6 +7,10 @@ device1 is the 24-port VNA
 
 Author: Noah Stieler, 2023
 """
+# TODO redesign how VNA is storing info,
+# Use a dictionary with values being an object
+# of (set value, min val, max val)
+# TODO get feed rate and calculate travel time for set_position delay
 
 import gui
 import device0

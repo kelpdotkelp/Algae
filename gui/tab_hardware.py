@@ -82,8 +82,8 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     frame_buttons.pack(pady=pady, anchor='w')
 
     global _button_hw_scan, _button_c_connect
-    _button_hw_scan = ttk.Button(frame_buttons, text='Scan for hardware')
-    _button_c_connect = ttk.Button(frame_buttons, text='Check for connections')
+    _button_hw_scan = ttk.Button(frame_buttons, text='Connect')
+    _button_c_connect = ttk.Button(frame_buttons, text='Display resources')
 
     _button_hw_scan.grid(row=0, column=0)
     _button_c_connect.grid(row=0, column=1, padx=15)
@@ -100,11 +100,11 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     return frame_page_base
 
 
-def on_hardware_scan(function: types.FunctionType) -> None:
+def on_connect(function: types.FunctionType) -> None:
     _button_hw_scan.configure(command=function)
 
 
-def on_check_connection(function: types.FunctionType) -> None:
+def on_display_resources(function: types.FunctionType) -> None:
     _button_c_connect.configure(command=function)
 
 

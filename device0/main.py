@@ -11,12 +11,14 @@ https://knowledge.ni.com/KnowledgeArticleDetails?id=kA03q000000x2YDCAY&l=en-CA
 
 Author: Noah Stieler, 2023
 """
-import tkinter
+import tkinter as tk
 import pyvisa as visa
+import serial.tools.list_ports
 
 import gui
 import out
-from display_resources import visa_display_resources
+from cnc import Point, CNC
+from display_resources import display_resources
 from . import data_handler
 from . import canvas
 from .imaging import VNA, Switches
@@ -31,6 +33,15 @@ port_refl = refl_range[0]
 
 vna, switches = VNA(None), Switches(None)
 _entry_vna, _entry_switches = None, None
+
+cnc = CNC()
+_entry_cnc, _button_origin = None, None
+
+pos_list = [Point(20, 20),
+            Point(-20, 20),
+            Point(-20, -20),
+            Point(20, -20)]
+pos_index = 0
 
 """
 Each key is an input parameter and the value is a list.
@@ -81,13 +92,18 @@ def main() -> None:
     input_s_param['S21'][0].state(['selected'])
 
     # Set up hardware gui
-    global _entry_vna, _entry_switches
+    global _entry_vna, _entry_switches, _entry_cnc, _button_origin
     _entry_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
     _entry_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
 
+    _entry_cnc, _button_origin = gui.tab_hardware.add_hardware('CNC', default_value='',
+                                                               action=True, action_name='Auto-detect')
+    _button_origin['state'] = tk.ACTIVE
+    _button_origin.configure(command=on_button_auto_detect)
+
     # Define button functionality
-    gui.tab_hardware.on_hardware_scan(scan_for_hardware)
-    gui.tab_hardware.on_check_connection(visa_display_resources)
+    gui.tab_hardware.on_connect(on_button_connect)
+    gui.tab_hardware.on_display_resources(display_resources)
     gui.bottom_bar.on_button_run(on_button_run)
     gui.bottom_bar.on_button_stop(abort_scan)
 
@@ -95,6 +111,8 @@ def main() -> None:
         Main application loop   
     """
     while not gui.core.app_terminated:
+        global port_tran, port_refl
+
         gui.core.update()
         get_gui_parameters()
 
@@ -137,19 +155,39 @@ def main() -> None:
             scan_finished = update_ports()
             update_progress_bar()
 
-            if scan_finished:
-                state = 'scan_finished'
         if state == 'scan_finished':
             for s_parameter in vna.sp_to_measure:
                 out.out_file_complete(s_parameter)
 
-            vna.close()
-            switches.close()
+            global pos_index
+            pos_index += 1
+
+            if pos_index >= len(pos_list):
+                vna.close()
+                switches.close()
+
+                cnc.set_position(Point(0, 0))
+
+                gui.bottom_bar.toggle_button_stop()
+
+                state = 'idle'
+            else:
+                # Set up new output folder
+                out.mkdir_new_pos()
+                for s_parameter in vna.sp_to_measure:
+                    meta_dict = data_handler.format_meta_data(vna, s_parameter,
+                                                              gui.tab_home.get_description(),
+                                                              pos_list[pos_index].x, pos_list[pos_index].y)
+                    out.out_file_init(s_parameter, meta_dict, vna.freq_list)
+
+                cnc.set_position(pos_list[pos_index])
+
+                port_tran = tran_range[0]
+                port_refl = refl_range[0]
+
+                state = 'scan'
 
             gui.bottom_bar.progress_bar_set(0)
-            gui.bottom_bar.toggle_button_stop()
-
-            state = 'idle'
 
 
 def update_ports() -> bool:
@@ -180,9 +218,9 @@ def on_button_run() -> None:
     that all user input is valid, and sets up output directory and files.
     Assuming no user errors, state is changed to 'scan'."""
 
-    scan_for_hardware()
+    on_button_connect()
     """Check that hardware is connected and ready."""
-    if vna.resource is None or switches.resource is None:
+    if vna.resource is None or switches.resource is None or cnc.ser is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
 
@@ -207,7 +245,14 @@ def on_button_run() -> None:
     vna.power = input_param['power'][1]
 
     vna.initialize()
-    switches.initialize()
+
+    """Initialize CNC"""
+    global pos_index
+    pos_index = 0
+
+    """TEMP"""
+    cnc.set_origin()
+    cnc.set_position(pos_list[pos_index])
 
     """Initialize output file structure"""
     out.init_root(gui.tab_home.get_output_dir(), gui.tab_home.get_name())
@@ -215,12 +260,15 @@ def on_button_run() -> None:
 
     for s_parameter in vna.sp_to_measure:
         meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                  gui.tab_home.get_description())
+                                                  gui.tab_home.get_description(),
+                                                  pos_list[pos_index].x, pos_list[pos_index].y)
         out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
+    """Initialize switches"""
     global port_tran, port_refl
     port_tran = tran_range[0]
     port_refl = refl_range[0]
+    switches.initialize()
 
     gui.bottom_bar.toggle_button_stop()
 
@@ -241,7 +289,7 @@ def abort_scan() -> None:
     state = 'idle'
 
 
-def scan_for_hardware() -> None:
+def on_button_connect() -> None:
     """Opens the vna and switches resources and checks there is a valid
     connection with them."""
     visa_resource_manager = visa.ResourceManager()
@@ -251,17 +299,25 @@ def scan_for_hardware() -> None:
 
     if _entry_vna.get() in r_list:
         visa_vna = visa_resource_manager.open_resource(_entry_vna.get())
-        gui.tab_hardware.set_indicator(0, 'Resource found.', 'green')
+        gui.tab_hardware.set_indicator(0, 'Connected.', 'green')
     else:
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
     vna = VNA(visa_vna)
 
     if _entry_switches.get() in r_list:
         visa_switches = visa_resource_manager.open_resource(_entry_switches.get())
-        gui.tab_hardware.set_indicator(1, 'Resource found.', 'green')
+        gui.tab_hardware.set_indicator(1, 'Connected.', 'green')
     else:
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
     switches = Switches(visa_switches)
+
+    global cnc
+    cnc = CNC()
+    success = cnc.connect(_entry_cnc.get())
+    if success:
+        gui.tab_hardware.set_indicator(2, 'Connected.', 'green')
+    else:
+        gui.tab_hardware.set_indicator(2, 'Resource not found.', 'red')
 
 
 def get_gui_parameters() -> None:
@@ -282,7 +338,7 @@ def get_gui_parameters() -> None:
                 input_s_param[key][1] = 1
             else:
                 input_s_param[key][1] = 0
-    except tkinter.TclError:
+    except tk.TclError:
         pass
 
 
@@ -290,8 +346,20 @@ def update_progress_bar() -> None:
     try:
         pair_count = tran_range[1] * (refl_range[1] - 1)
         gui.bottom_bar.progress_bar_set((port_tran * 24 - 1 + port_refl) / pair_count)
-    except tkinter.TclError:
+    except tk.TclError:
         pass
+
+
+def on_button_auto_detect() -> None:
+    port_list = serial.tools.list_ports.comports()
+
+    if len(port_list) == 0:
+        return
+
+    elif len(port_list) == 1:
+        text = tk.StringVar()
+        text.set(port_list[0].name)
+        _entry_cnc['textvariable'] = text
 
 
 def _debug_play_graphics() -> None:

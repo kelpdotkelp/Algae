@@ -19,7 +19,7 @@ import pyvisa as visa
 
 import gui
 import out
-from display_resources import visa_display_resources
+from display_resources import display_resources
 from .data_handler import format_meta_data
 from .gui import calibration
 from .imaging import VNA
@@ -59,8 +59,8 @@ def main() -> None:
 
     # Define button functionality
     gui.bottom_bar.on_button_run(on_button_run)
-    gui.tab_hardware.on_hardware_scan(scan_for_hardware)
-    gui.tab_hardware.on_check_connection(visa_display_resources)
+    gui.tab_hardware.on_connect(scan_for_hardware)
+    gui.tab_hardware.on_display_resources(display_resources)
 
     # Set up hardware gui
     global _entry_vna, _button_calib

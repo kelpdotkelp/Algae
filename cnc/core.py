@@ -9,68 +9,80 @@ Author: Noah Stieler, 2023
 """
 
 # TODO command status displayed on gui.
+# TODO command error handling
 
 import serial
 import time
+from dataclasses import dataclass
 from math import sqrt
 
 wa_radius_measured = 120
 wa_padding = 20
 obj_radius = 20
 
-_TIMEOUT = 1
-
-_ser = None
 is_origin_set = False
 
-pos_x = 0
-pos_y = 0
+
+@dataclass
+class Point:
+    x: float
+    y: float
+
+    @property
+    def mag(self):
+        return sqrt(pow(self.x, 2) + pow(self.y, 2))
 
 
-def connect(port: str, baud_rate: int) -> None:
-    global _ser
-    _ser = serial.Serial(port, baud_rate, timeout=_TIMEOUT)
+class CNC:
 
-    _ser.write('\r\n\r\n'.encode('utf-8'))
-    time.sleep(2)
-    _ser.flushInput()
+    def __init__(self):
+        self.ser = None
 
+    def __del__(self):
+        if self.ser is not None:
+            self.ser.close()
 
-def set_origin() -> None:
-    """Sets the origin to be in centre of chamber."""
-    _send_command('G90')  # Absolute positioning
-    _send_command('G92 X0 Y0')  # Set origin point
-    global is_origin_set, pos_x, pos_y
-    is_origin_set = True
-    pos_x = 0
-    pos_y = 0
+    def connect(self, port: str, baud_rate: int = 115200, timeout: float = 1) -> bool:
+        if self.ser is not None:
+            self.ser.close()
 
+        try:
+            # timeout is in seconds
+            self.ser = serial.Serial(port, baudrate=baud_rate, timeout=timeout)
 
-def set_position(new_x: float, new_y: float) -> bool:
-    """Attempts to move to a new position. Returns false
-    if position is outside working area."""
-    global pos_x, pos_y
+            self.ser.write('\r\n\r\n'.encode('utf-8'))
+            time.sleep(2)
+            self.ser.flushInput()
 
-    wa_radius = wa_radius_measured - wa_padding - obj_radius
-    new_mag = sqrt(pow(new_x, 2) + pow(new_y, 2))
+            return True
+        except serial.serialutil.SerialException as e:
+            self.ser = None
 
-    if new_mag < wa_radius:
-        _send_command(f'G0 X{new_x} Y{new_y}')
-        pos_x = new_x
-        pos_y = new_y
-        return True
-    else:
-        return False
+            return False
 
+    def set_origin(self) -> None:
+        """Sets the origin at the targets current position."""
+        self._send_command('G90')  # Absolute positioning
+        self._send_command('G92 X0 Y0')  # Set origin point
+        global is_origin_set
+        is_origin_set = True
 
-def close() -> None:
-    _ser.close()
+    def set_position(self, new_pos: Point) -> bool:
+        """Attempts to move to a new position. Returns false
+        if position is outside working area."""
+        wa_radius = wa_radius_measured - wa_padding - obj_radius
 
+        if new_pos.mag < wa_radius:
+            self._send_command(f'G0 X{new_pos.x} Y{new_pos.y}')
+            time.sleep(2)  # TODO change me!
+            return True
+        else:
+            return False
 
-def _send_command(cmd: str) -> None:
-    _ser.write((cmd + '\n').encode('utf-8'))
-    out = _ser.readlines()
+    def _send_command(self, cmd: str) -> None:
+        self.ser.write((cmd + '\n').encode('utf-8'))
+        out = self.ser.readlines()
 
-    for item in out:
-        item.decode()
-    print(out)
+        for item in out:
+            item.decode()
+        print(out)

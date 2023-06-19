@@ -3,24 +3,24 @@ import time
 
 
 def main():
-    cnc.connect('COM3', 115200)
-    cnc.set_origin()
+    cnc_cur.connect('COM3', 115200)
+    cnc_cur.set_origin()
 
-    cnc.set_position(20, 20)
+    cnc_cur.set_position(20, 20)
     time.sleep(2)
 
-    cnc.set_position(-20, 20)
+    cnc_cur.set_position(-20, 20)
     time.sleep(2)
 
-    cnc.set_position(-20, -20)
+    cnc_cur.set_position(-20, -20)
     time.sleep(2)
 
-    cnc.set_position(20, -20)
+    cnc_cur.set_position(20, -20)
     time.sleep(2)
 
-    cnc.set_position(0, 0)
+    cnc_cur.set_position(0, 0)
 
-    cnc.close()
+    cnc_cur.close()
 
 
 if __name__ == '__main__':
