@@ -16,9 +16,11 @@ import pyvisa as visa
 import serial.tools.list_ports
 
 import gui
+from gui.parameter import input_dict, checkbox_dict
 import out
 from cnc import Point, CNC
 from display_resources import display_resources
+
 from . import data_handler
 from . import canvas
 from .imaging import VNA, Switches
@@ -44,20 +46,6 @@ pos_list = [Point(20, 20),
 pos_index = 0
 
 """
-Each key is an input parameter and the value is a list.
-0 = the widget
-1 = parameter value
-2 = parameter display name
-"""
-input_param = {}
-"""
-Each key holds a list:
-0 = checkbox widget
-1 = current state of the widget (0 or 1)
-"""
-input_s_param = {}
-
-"""
 Bug
 VisaIOError: VI_ERROR_INV_OBJECT 
 Thrown when:
@@ -76,20 +64,15 @@ def main() -> None:
     gui.core.create_gui()
 
     # Set up input parameters
-    input_param['num_points'] = [gui.tab_home.add_parameter_num('Number of points'),
-                                 0, 'Number of points']
-    input_param['ifbw'] = [gui.tab_home.add_parameter_num('IF bandwidth (Hz)'),
-                           0, 'IF bandwidth (Hz)']
-    input_param['freq_start'] = [gui.tab_home.add_parameter_num('Start frequency (Hz)'),
-                                 0, 'Start frequency (Hz)']
-    input_param['freq_stop'] = [gui.tab_home.add_parameter_num('Stop frequency (Hz)'),
-                                0, 'Stop frequency (Hz)']
-    input_param['power'] = [gui.tab_home.add_parameter_num('Power (dBm)'),
-                            0, 'Power (dBm)']
+    # TODO add to input_dict in the method!
+    input_dict['num_points'] = gui.tab_home.add_parameter_num('Number of points')
+    input_dict['ifbw'] = gui.tab_home.add_parameter_num('IF bandwidth (Hz)')
+    input_dict['freq_start'] = gui.tab_home.add_parameter_num('Start frequency (Hz)')
+    input_dict['freq_stop'] = gui.tab_home.add_parameter_num('Stop frequency (Hz)')
+    input_dict['power'] = gui.tab_home.add_parameter_num('Power (dBm)')
 
-    global input_s_param
-    input_s_param = gui.tab_home.add_parameter_checkbox(['S11', 'S12', 'S21', 'S22'])
-    input_s_param['S21'][0].state(['selected'])
+    gui.tab_home.add_parameter_checkbox(['S11', 'S12', 'S21', 'S22'])
+    checkbox_dict['S21'].widget.state(['selected']) # TODO put this in a method
 
     # Set up hardware gui
     global _entry_vna, _entry_switches, _entry_cnc, _button_origin
@@ -114,7 +97,6 @@ def main() -> None:
         global port_tran, port_refl
 
         gui.core.update()
-        get_gui_parameters()
 
         gui.tab_home.draw_canvas(canvas.update)
 
@@ -227,22 +209,25 @@ def on_button_run() -> None:
     vna.set_parameter_ranges()
 
     vna.sp_to_measure = []
-    for key in input_s_param:
-        if input_s_param[key][1] == 1:
-            vna.sp_to_measure.append(key)
 
-    valid = input_validate(vna, input_param)
+    s_params = ['S11', 'S21', 'S12', 'S22']
+    for s_param in s_params:
+        if s_param in checkbox_dict:
+            if checkbox_dict[s_param].value == 1:
+                vna.sp_to_measure.append(s_param)
+
+    valid = input_validate(vna)
     if not valid:
         return
 
     gui.bottom_bar.message_clear()
 
     """Initialize vna parameters"""
-    vna.data_point_count = int(input_param['num_points'][1])
-    vna.if_bandwidth = input_param['ifbw'][1]
-    vna.freq_start = input_param['freq_start'][1]
-    vna.freq_stop = input_param['freq_stop'][1]
-    vna.power = input_param['power'][1]
+    vna.data_point_count = int(input_dict['num_points'].value)
+    vna.if_bandwidth = input_dict['ifbw'].value
+    vna.freq_start = input_dict['freq_start'].value
+    vna.freq_stop = input_dict['freq_stop'].value
+    vna.power = input_dict['power'].value
 
     vna.initialize()
 
@@ -318,28 +303,6 @@ def on_button_connect() -> None:
         gui.tab_hardware.set_indicator(2, 'Connected.', 'green')
     else:
         gui.tab_hardware.set_indicator(2, 'Resource not found.', 'red')
-
-
-def get_gui_parameters() -> None:
-    """Gets data from the tkinter widgets and
-    updates all the parameters. For numeric entries,
-    if the input is invalid, the parameter is set to inf.
-    This will correctly throw an error when checking parameters."""
-    try:
-        for key in input_param:
-            input_param[key][1] = input_param[key][0].get()
-            try:
-                input_param[key][1] = float(input_param[key][1])
-            except ValueError:
-                input_param[key][1] = float('inf')
-
-        for key in input_s_param:
-            if 'selected' in input_s_param[key][0].state():
-                input_s_param[key][1] = 1
-            else:
-                input_s_param[key][1] = 0
-    except tk.TclError:
-        pass
 
 
 def update_progress_bar() -> None:

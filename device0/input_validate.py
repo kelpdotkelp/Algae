@@ -10,34 +10,35 @@ Author: Noah Stieler, 2023
 import os.path
 
 import gui
+from gui.parameter import input_dict
 from .imaging import VNA
 
 
-def input_validate(vna: VNA, input_param: dict) -> bool:
+def input_validate(vna: VNA) -> bool:
     """Checks all user input for errors/invalid entries"""
     valid = True
 
-    if not (vna.data_point_count_range[0] <= input_param['num_points'][1] <= vna.data_point_count_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['num_points'][2] + f'\" must be in range: ' +
+    if not (vna.data_point_count_range[0] <= input_dict['num_points'].value <= vna.data_point_count_range[1]):
+        gui.bottom_bar.message_display('\"' + input_dict['num_points'].name + f'\" must be in range: ' +
                                        str(vna.data_point_count_range), 'red')
         valid = False
-    elif not (vna.if_bandwidth_range[0] <= input_param['ifbw'][1] <= vna.if_bandwidth_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['ifbw'][2] + f'\" must be in range: ' +
+    elif not (vna.if_bandwidth_range[0] <= input_dict['ifbw'].value <= vna.if_bandwidth_range[1]):
+        gui.bottom_bar.message_display('\"' + input_dict['ifbw'].name + f'\" must be in range: ' +
                                        str(vna.if_bandwidth_range), 'red')
         valid = False
-    elif not (vna.freq_start_range[0] <= input_param['freq_start'][1] <= vna.freq_start_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['freq_start'][2] + f'\" must be in range: ' +
+    elif not (vna.freq_start_range[0] <= input_dict['freq_start'].value <= vna.freq_start_range[1]):
+        gui.bottom_bar.message_display('\"' + input_dict['freq_start'].name + f'\" must be in range: ' +
                                        str(vna.freq_start_range), 'red')
         valid = False
-    elif not (vna.freq_stop_range[0] <= input_param['freq_stop'][1] <= vna.freq_stop_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['freq_stop'][2] + f'\" must be in range: ' +
+    elif not (vna.freq_stop_range[0] <= input_dict['freq_stop'].value <= vna.freq_stop_range[1]):
+        gui.bottom_bar.message_display('\"' + input_dict['freq_stop'].name + f'\" must be in range: ' +
                                        str(vna.freq_stop_range), 'red')
         valid = False
-    elif not (vna.power_range[0] <= input_param['power'][1] <= vna.power_range[1]):
-        gui.bottom_bar.message_display('\"' + input_param['power'][2] + f'\" must be in range: ' +
+    elif not (vna.power_range[0] <= input_dict['power'].value <= vna.power_range[1]):
+        gui.bottom_bar.message_display('\"' + input_dict['power'].name + f'\" must be in range: ' +
                                        str(vna.power_range), 'red')
         valid = False
-    elif not (input_param['freq_stop'][1] > input_param['freq_start'][1]):
+    elif not (input_dict['freq_stop'].value > input_dict['freq_start'].value):
         gui.bottom_bar.message_display('Start frequency must be less than stop frequency.', 'red')
         valid = False
     elif not len(vna.sp_to_measure) >= 1:

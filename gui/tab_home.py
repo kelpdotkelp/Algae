@@ -19,6 +19,8 @@ import types
 from tkinter import filedialog
 import tkinter.ttk as ttk
 
+from . import parameter
+
 canvas = None
 canvas_size = 0
 
@@ -31,7 +33,7 @@ _text_desc = None
 _text_name = None
 
 
-def add_parameter_num(display_name: str) -> tk.Entry:
+def add_parameter_num(display_name: str) -> parameter.InputItemNumber:
     global _parameter_row_count
     padding_x = 15
     padding_y = 10
@@ -47,10 +49,10 @@ def add_parameter_num(display_name: str) -> tk.Entry:
 
     _parameter_row_count += 1
 
-    return entry
+    return parameter.InputItemNumber(entry, display_name, 0)
 
 
-def add_parameter_checkbox(display_name_list: list) -> dict:
+def add_parameter_checkbox(display_name_list: list) -> None:
     global _parameter_row_count
 
     _frame_parameter_box.rowconfigure(index=_parameter_row_count, weight=1)
@@ -59,20 +61,20 @@ def add_parameter_checkbox(display_name_list: list) -> dict:
     new_frame.grid(row=_parameter_row_count, column=0, sticky='nsew')
     new_frame.rowconfigure(index=0, weight=1)
 
-    checkbox_list = {}
     for i in range(len(display_name_list)):
         frame_sub = tk.Frame(new_frame)
         frame_sub.grid(row=0, column=i)
         new_frame.columnconfigure(index=i, weight=1)
 
         tk.Label(frame_sub, text=display_name_list[i], justify=tk.LEFT).grid(row=0, column=0)
-        checkbox_list[display_name_list[i]] = [ttk.Checkbutton(frame_sub), 0]  # index 1 is checkbutton value
-        checkbox_list[display_name_list[i]][0].state(['!alternate'])
-        checkbox_list[display_name_list[i]][0].grid(row=0, column=1)
+        checkbox = ttk.Checkbutton(frame_sub)
+        checkbox.state(['!alternate'])
+        checkbox.grid(row=0, column=1)
+
+        parameter.checkbox_dict[display_name_list[i]] =\
+            parameter.InputItemBoolean(checkbox, display_name_list[i], 0)
 
     _parameter_row_count += 1
-
-    return checkbox_list
 
 
 def create(frame_content_base: tk.Frame) -> tk.Frame:

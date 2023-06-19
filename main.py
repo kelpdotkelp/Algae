@@ -7,6 +7,7 @@ device1 is the 24-port VNA
 
 Author: Noah Stieler, 2023
 """
+# TODO device1 redesign to match device0!!!
 # TODO redesign how VNA is storing info,
 # Use a dictionary with values being an object
 # of (set value, min val, max val)

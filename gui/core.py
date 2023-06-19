@@ -15,6 +15,7 @@ from threading import Thread
 import gui.tab_home as tab_home
 import gui.tab_hardware as tab_hardware
 import gui.bottom_bar as bottom_bar
+import gui.parameter as parameter
 
 _ASPECT_RATIO = 4 / 3
 _HEIGHT = 900
@@ -93,6 +94,7 @@ def create_gui() -> None:
 def update() -> None:
     _root.update_idletasks()
     _root.update()
+    parameter.update()
 
 
 def update_during_thread_wait(thread: Thread) -> None:
