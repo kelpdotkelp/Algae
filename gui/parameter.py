@@ -3,7 +3,7 @@ Algae ~ Automated Target Positioning System
 Electromagnetic Imaging Lab, University of Manitoba
 
 Part of the gui.
-Maintains a dictionaries of all gui input.
+Maintains an updated dictionary of all gui input.
 
 Author: Noah Stieler, 2023
 """
@@ -16,6 +16,9 @@ input_dict = {}
 
 @dataclass
 class InputItem:
+    """Base class for all input items.
+    All InputItem objects and its subclasses store a tkinter widget,
+    the item's display name, and its value."""
     widget: Widget
     name: str
 
@@ -25,6 +28,8 @@ class InputItemNumber(InputItem):
     value: float
 
     def update(self) -> None:
+        """If the input is invalid, the parameter is set to inf.
+        This will correctly throw an error when checking parameters."""
         self.value = self.widget.get()
         try:
             self.value = float(self.value)
@@ -61,9 +66,7 @@ class InputItemBoolean(InputItem):
 
 def update() -> None:
     """Gets data from the tkinter widgets and
-    updates all the parameters. For numeric entries,
-    if the input is invalid, the parameter is set to inf.
-    This will correctly throw an error when checking parameters."""
+    updates all the parameters."""
     try:
         for key in input_dict:
             input_dict[key].update()

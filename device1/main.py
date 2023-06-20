@@ -47,7 +47,7 @@ def main() -> None:
 
     # Define button functionality
     gui.bottom_bar.on_button_run(on_button_run)
-    gui.tab_hardware.on_connect(scan_for_hardware)
+    gui.tab_hardware.on_connect(on_button_connect)
     gui.tab_hardware.on_display_resources(display_resources)
 
     # Set up hardware gui
@@ -116,7 +116,7 @@ def on_button_run() -> None:
     state = 'scan'
 
 
-def scan_for_hardware() -> None:
+def on_button_connect() -> None:
     """Opens the vna resource and checks there is a valid
     connection with it."""
     visa_resource_manager = visa.ResourceManager()
