@@ -40,14 +40,6 @@ def main() -> None:
     gui.core.create_gui()
 
     # Set up input parameters
-    """input_param['num_points'] = [gui.tab_home.add_parameter_num('Number of points'),
-                                 0, 'Number of points']
-    input_param['ifbw'] = [gui.tab_home.add_parameter_num('IF bandwidth (Hz)'),
-                           0, 'IF bandwidth (Hz)']
-    input_param['freq_start'] = [gui.tab_home.add_parameter_num('Start frequency (Hz)'),
-                                 0, 'Start frequency (Hz)']
-    input_param['freq_stop'] = [gui.tab_home.add_parameter_num('Stop frequency (Hz)'),
-                                0, 'Stop frequency (Hz)']"""
     input_dict['num_points'] = gui.tab_home.add_parameter_num('Number of points')
     input_dict['ifbw'] = gui.tab_home.add_parameter_num('IF bandwidth (Hz)')
     input_dict['freq_start'] = gui.tab_home.add_parameter_num('Start frequency (Hz)')
