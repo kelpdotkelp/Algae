@@ -168,7 +168,7 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     entry_desc = tk.Entry(frame_output_box)
     entry_desc.grid(row=5, column=0, padx=15, pady=5, sticky='ew')
     parameter.input_dict['description'] = \
-        parameter.InputItemString(entry_name, display_name)
+        parameter.InputItemString(entry_desc, display_name)
 
     """CANVAS"""
     frame_display.pack_propagate(False)

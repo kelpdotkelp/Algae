@@ -94,7 +94,6 @@ def create_gui() -> None:
 def update() -> None:
     _root.update_idletasks()
     _root.update()
-    parameter.update()
 
 
 def update_during_thread_wait(thread: Thread) -> None:

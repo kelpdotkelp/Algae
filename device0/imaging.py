@@ -17,27 +17,29 @@ Author: Noah Stieler, 2023
 import time
 import pyvisa as visa
 
+from gui.parameter import input_dict
+
 
 class VNA:
+    s_params = ['S11', 'S21', 'S12', 'S22']
 
     def __init__(self, resource: visa.Resource):
         self.resource = resource
         self.name = ""
 
-        self.sp_to_measure = ['S21']
-        self.data_point_count = 5
-        self.if_bandwidth = 5 * 1000  # Hz
-        self.freq_start = 3 * 1000000000  # Hz
-        self.freq_stop = 5 * 1000000000  # Hz
-        self.power = 0  # dBm
+        self.sp_to_measure = []
+        for s_param in VNA.s_params:
+            if s_param in input_dict:
+                if input_dict[s_param].value == 1:
+                    self.sp_to_measure.append(s_param)
 
-        self.data_point_count_range = ()
-        self.if_bandwidth_range = ()
-        self.freq_start_range = ()
-        self.freq_stop_range = ()
-        self.power_range = ()
+        self.p_ranges = {}
+        self._set_parameter_ranges()
 
-        self.freq_list = self._freq_list_linspace()
+        self.freq_list = []
+        inc = (input_dict['freq_stop'].value - input_dict['freq_start'].value) / (input_dict['num_points'].value - 1)
+        for i in range(int(input_dict['num_points'].value)):
+            self.freq_list.append(input_dict['freq_start'].value + i * inc)
 
     def __del__(self):
         if self.resource is None:
@@ -61,7 +63,6 @@ class VNA:
         self.resource.write_termination = '\n'
 
         self.name = self.resource.query('*IDN?')
-        self.freq_list = self._freq_list_linspace()
 
         self.write('SYSTEM:FPRESET')
 
@@ -79,12 +80,12 @@ class VNA:
         self.write('SENSE1:AVERAGE OFF')
 
         self.write('SENSE1:SWEEP:TYPE LINEAR')
-        self.write(f'SENSE1:SWEEP:POINTS {self.data_point_count}')
-        self.write(f'SENSE1:BANDWIDTH {self.if_bandwidth}')
-        self.write(f'SENSE1:FREQUENCY:START {self.freq_start}')
-        self.write(f'SENSE1:FREQUENCY:STOP {self.freq_stop}')
+        self.write('SENSE1:SWEEP:POINTS ' + str(int(input_dict['num_points'].value)))
+        self.write('SENSE1:BANDWIDTH ' + str(input_dict['ifbw'].value))
+        self.write('SENSE1:FREQUENCY:START ' + str(input_dict['freq_start'].value))
+        self.write('SENSE1:FREQUENCY:STOP ' + str(input_dict['freq_stop'].value))
         # This is from the old software but the manual has a different syntax
-        self.write(f'SOURCE1:POWER1 {self.power}DBM')
+        self.write('SOURCE1:POWER1 ' + str(input_dict['power'].value) + 'DBM')
 
         # Kind of arbitrary, chosen like this to ensure plenty of time to complete sweep
         # Extra important if data_point_count is large.
@@ -118,49 +119,40 @@ class VNA:
 
         return output
 
-    def _freq_list_linspace(self) -> list:
-        """Returns a list of the frequencies the VNA is sampling at."""
-        list_out = []
-        inc = (self.freq_stop - self.freq_start) / (self.data_point_count - 1)
-        for i in range(self.data_point_count):
-            list_out.append(self.freq_start + i * inc)
-        return list_out
-
-    def set_parameter_ranges(self) -> None:
+    def _set_parameter_ranges(self) -> None:
         """Gets all valid parameter ranges from the VNA.
         this is used when the 'run' button is pressed to ensure the
         user submitted valid data."""
         self.resource.read_termination = '\n'
         self.resource.write_termination = '\n'
 
-        # Including these commands first in case
-        # this setup changes parameter range.
+        # Testing has confirmed this set up is required.
         self.write('SYSTEM:FPRESET')
-        parameter_name = 'parameter_' + self.sp_to_measure[0]
-        self.write('CALCULATE1:PARAMETER:DEFINE \'' + parameter_name + '\', ' + self.sp_to_measure[0])
+        parameter_name = 'parameter_S21'
+        self.write('CALCULATE1:PARAMETER:DEFINE \'' + parameter_name + '\', S21')
         self.write('INITIATE:CONTINUOUS OFF')
         self.write('TRIGGER:SOURCE MANUAL')
         self.write('SENSE1:SWEEP:MODE HOLD')
         self.write('SENSE1:AVERAGE OFF')
         self.write('SENSE1:SWEEP:TYPE LINEAR')
 
-        self.data_point_count_range = (
+        self.p_ranges['num_points'] = (
             int(self.query('SENSE1:SWEEP:POINTS? MIN')),
             int(self.query('SENSE1:SWEEP:POINTS? MAX'))
         )
-        self.if_bandwidth_range = (
+        self.p_ranges['ifbw'] = (
             float(self.query('SENSE1:BANDWIDTH? MIN')),
             float(self.query('SENSE1:BANDWIDTH? MAX'))
         )
-        self.freq_start_range = (
+        self.p_ranges['freq_start'] = (
             float(self.query('SENSE1:FREQUENCY:START? MIN')),
             float(self.query('SENSE1:FREQUENCY:START? MAX'))
         )
-        self.freq_stop_range = (
+        self.p_ranges['freq_stop'] = (
             float(self.query('SENSE1:FREQUENCY:STOP? MIN')),
             float(self.query('SENSE1:FREQUENCY:STOP? MAX'))
         )
-        self.power_range = (
+        self.p_ranges['power'] = (
             float(self.query('SOURCE1:POWER1? MIN')),
             float(self.query('SOURCE1:POWER1? MAX'))
         )

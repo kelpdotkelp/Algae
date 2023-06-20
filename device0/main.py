@@ -33,7 +33,7 @@ refl_range = (Switches.PORT_MIN, Switches.PORT_MAX)
 port_tran = tran_range[0]
 port_refl = refl_range[0]
 
-vna, switches = VNA(None), Switches(None)
+vna, switches = None, None
 
 cnc = CNC()
 _button_auto_detect = None
@@ -109,7 +109,7 @@ def main() -> None:
         # _debug_play_graphics()
 
         if state == 'idle':
-            pass
+            gui.parameter.update()
         if state == 'scan':
             if port_refl == port_tran:
                 scan_finished = update_ports()
@@ -164,7 +164,6 @@ def main() -> None:
                 out.mkdir_new_pos()
                 for s_parameter in vna.sp_to_measure:
                     meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                              input_dict['description'].value,
                                                               pos_list[pos_index].x, pos_list[pos_index].y)
                     out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
@@ -206,34 +205,19 @@ def on_button_run() -> None:
     that all user input is valid, and sets up output directory and files.
     Assuming no user errors, state is changed to 'scan'."""
 
+    # Open and initialize resources
     on_button_connect()
+
     """Check that hardware is connected and ready."""
-    if vna.resource is None or switches.resource is None or cnc.ser is None:
+    if vna is None or switches is None or cnc.ser is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
-
-    vna.set_parameter_ranges()
-
-    vna.sp_to_measure = []
-
-    s_params = ['S11', 'S21', 'S12', 'S22']
-    for s_param in s_params:
-        if s_param in input_dict:
-            if input_dict[s_param].value == 1:
-                vna.sp_to_measure.append(s_param)
 
     valid = input_validate(vna)
     if not valid:
         return
 
     gui.bottom_bar.message_clear()
-
-    """Initialize vna parameters"""
-    vna.data_point_count = int(input_dict['num_points'].value)
-    vna.if_bandwidth = input_dict['ifbw'].value
-    vna.freq_start = input_dict['freq_start'].value
-    vna.freq_stop = input_dict['freq_stop'].value
-    vna.power = input_dict['power'].value
 
     vna.initialize()
 
@@ -251,7 +235,6 @@ def on_button_run() -> None:
 
     for s_parameter in vna.sp_to_measure:
         meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                  input_dict['description'].value,
                                                   pos_list[pos_index].x, pos_list[pos_index].y)
         out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
@@ -286,21 +269,22 @@ def on_button_connect() -> None:
     visa_resource_manager = visa.ResourceManager()
     r_list = visa_resource_manager.list_resources()
     global vna, switches
-    visa_vna, visa_switches = None, None
 
     if input_dict['address_vna'].value in r_list:
         visa_vna = visa_resource_manager.open_resource(input_dict['address_vna'].value)
+        vna = VNA(visa_vna)
         gui.tab_hardware.set_indicator(0, 'Connected.', 'green')
     else:
+        vna = None
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
-    vna = VNA(visa_vna)
 
     if input_dict['address_switch'].value in r_list:
         visa_switches = visa_resource_manager.open_resource(input_dict['address_switch'].value)
+        switches = Switches(visa_switches)
         gui.tab_hardware.set_indicator(1, 'Connected.', 'green')
     else:
+        switches = None
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
-    switches = Switches(visa_switches)
 
     global cnc
     cnc = CNC()

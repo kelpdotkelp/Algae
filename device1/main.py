@@ -65,7 +65,7 @@ def main() -> None:
         gui.core.update()
 
         if state == 'idle':
-            pass
+            gui.parameter.update()
         if state == 'scan':
             t = threading.Thread(target=vna.fire)
             t.start()
