@@ -17,6 +17,7 @@ from . import parameter
 _frame_hardware_box = None
 _status_indicators = []
 _button_hw_scan, _button_c_connect = None, None
+_button_set_origin = None
 _hardware_count = 0
 
 
@@ -91,6 +92,17 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     _button_hw_scan.grid(row=0, column=0)
     _button_c_connect.grid(row=0, column=1, padx=15)
 
+    _create_positioning(frame_hardware)
+
+    return frame_page_base
+
+
+def _create_positioning(frame_hardware: tk.Frame) -> None:
+    global _button_set_origin
+    pady_head = 15
+    pady = 10
+    padx = 7
+
     label_hardware = tk.Label(frame_hardware, text='Positioning',
                               background=frame_hardware['background'],
                               font=('Arial', 12))
@@ -98,9 +110,26 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
 
     frame_pos_box = tk.Frame(frame_hardware, width=400, height=300,
                              borderwidth=3, relief=tk.SUNKEN)
+    frame_pos_box.columnconfigure(index=0, weight=1)
+    frame_pos_box.rowconfigure(index=0, weight=1)
     frame_pos_box.pack(anchor='w')
 
-    return frame_page_base
+    # Set origin
+    frame_origin = tk.Frame(frame_pos_box)
+    frame_origin.pack(anchor='w', padx=padx, pady=pady)
+    label_set_origin = tk.Label(frame_origin, text='Origin set.',
+                                background=frame_pos_box['background'])
+    _button_set_origin = ttk.Button(frame_origin, text='Set origin')
+    _button_set_origin.grid(row=0, column=0)
+    label_set_origin.grid(row=0, column=1)
+
+    # Select target type
+    frame_type = tk.Frame(frame_pos_box)
+    frame_type.pack(anchor='w', padx=padx, pady=pady)
+    frame_type.rowconfigure(index=0, weight=1)
+
+    label_target_type = tk.Label(frame_type, text='Target type:\t', justify=tk.LEFT)
+    label_target_type.grid(row=0, column=0)
 
 
 def on_connect(function: types.FunctionType) -> None:

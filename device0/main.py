@@ -56,6 +56,21 @@ Thrown by: pyvisa/highlevel.py
     connected again 
 """
 
+# TODO object dimensions
+# TODO point circle, linear spaced
+# TODO pick individual points
+# TODO Origin set
+"""
+
+Check boxes to select object type - circular, rectangular
+
+
+Show origin on gui
+    Red cross when origin is not set
+Show positions on gui
+
+"""
+
 
 def main() -> None:
     global state
@@ -204,9 +219,6 @@ def on_button_run() -> None:
     Checks that hardware is connected and ready,
     that all user input is valid, and sets up output directory and files.
     Assuming no user errors, state is changed to 'scan'."""
-
-    # Open and initialize resources
-    on_button_connect()
 
     """Check that hardware is connected and ready."""
     if vna is None or switches is None or cnc.ser is None:
