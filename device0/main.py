@@ -16,7 +16,7 @@ import pyvisa as visa
 import serial.tools.list_ports
 
 import gui
-from gui.parameter import input_dict, checkbox_dict
+from gui.parameter import input_dict
 import out
 from cnc import Point, CNC
 from display_resources import display_resources
@@ -34,10 +34,9 @@ port_tran = tran_range[0]
 port_refl = refl_range[0]
 
 vna, switches = VNA(None), Switches(None)
-_entry_vna, _entry_switches = None, None
 
 cnc = CNC()
-_entry_cnc, _button_origin = None, None
+_button_auto_detect = None
 
 pos_list = [Point(20, 20),
             Point(-20, 20),
@@ -64,25 +63,32 @@ def main() -> None:
     gui.core.create_gui()
 
     # Set up input parameters
-    # TODO add to input_dict in the method!
     input_dict['num_points'] = gui.tab_home.add_parameter_num('Number of points')
     input_dict['ifbw'] = gui.tab_home.add_parameter_num('IF bandwidth (Hz)')
     input_dict['freq_start'] = gui.tab_home.add_parameter_num('Start frequency (Hz)')
     input_dict['freq_stop'] = gui.tab_home.add_parameter_num('Stop frequency (Hz)')
     input_dict['power'] = gui.tab_home.add_parameter_num('Power (dBm)')
 
-    gui.tab_home.add_parameter_checkbox(['S11', 'S12', 'S21', 'S22'])
-    checkbox_dict['S21'].widget.state(['selected']) # TODO put this in a method
+    gui.tab_home.checkbox_row_begin()
+    input_dict['S11'] = gui.tab_home.add_parameter_checkbox('S11')
+    input_dict['S12'] = gui.tab_home.add_parameter_checkbox('S12')
+    input_dict['S21'] = gui.tab_home.add_parameter_checkbox('S21')
+    input_dict['S22'] = gui.tab_home.add_parameter_checkbox('S22')
+    gui.tab_home.checkbox_row_end()
+
+    input_dict['S21'].toggle()
 
     # Set up hardware gui
-    global _entry_vna, _entry_switches, _entry_cnc, _button_origin
-    _entry_vna = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
-    _entry_switches = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
+    global _button_auto_detect
+    input_dict['address_vna'] = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
+    input_dict['address_switch'] = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
 
-    _entry_cnc, _button_origin = gui.tab_hardware.add_hardware('CNC', default_value='',
-                                                               action=True, action_name='Auto-detect')
-    _button_origin['state'] = tk.ACTIVE
-    _button_origin.configure(command=on_button_auto_detect)
+    input_dict['address_serial'], _button_auto_detect = \
+        gui.tab_hardware.add_hardware('CNC', default_value='',
+                                      action=True, action_name='Auto-detect')
+
+    _button_auto_detect['state'] = tk.ACTIVE
+    _button_auto_detect.configure(command=on_button_auto_detect)
 
     # Define button functionality
     gui.tab_hardware.on_connect(on_button_connect)
@@ -158,7 +164,7 @@ def main() -> None:
                 out.mkdir_new_pos()
                 for s_parameter in vna.sp_to_measure:
                     meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                              gui.tab_home.get_description(),
+                                                              input_dict['description'].value,
                                                               pos_list[pos_index].x, pos_list[pos_index].y)
                     out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
@@ -212,8 +218,8 @@ def on_button_run() -> None:
 
     s_params = ['S11', 'S21', 'S12', 'S22']
     for s_param in s_params:
-        if s_param in checkbox_dict:
-            if checkbox_dict[s_param].value == 1:
+        if s_param in input_dict:
+            if input_dict[s_param].value == 1:
                 vna.sp_to_measure.append(s_param)
 
     valid = input_validate(vna)
@@ -240,12 +246,12 @@ def on_button_run() -> None:
     cnc.set_position(pos_list[pos_index])
 
     """Initialize output file structure"""
-    out.init_root(gui.tab_home.get_output_dir(), gui.tab_home.get_name())
+    out.init_root(input_dict['output_dir'].value, input_dict['output_name'].value)
     out.mkdir_new_pos()
 
     for s_parameter in vna.sp_to_measure:
         meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                  gui.tab_home.get_description(),
+                                                  input_dict['description'].value,
                                                   pos_list[pos_index].x, pos_list[pos_index].y)
         out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
@@ -282,15 +288,15 @@ def on_button_connect() -> None:
     global vna, switches
     visa_vna, visa_switches = None, None
 
-    if _entry_vna.get() in r_list:
-        visa_vna = visa_resource_manager.open_resource(_entry_vna.get())
+    if input_dict['address_vna'].value in r_list:
+        visa_vna = visa_resource_manager.open_resource(input_dict['address_vna'].value)
         gui.tab_hardware.set_indicator(0, 'Connected.', 'green')
     else:
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
     vna = VNA(visa_vna)
 
-    if _entry_switches.get() in r_list:
-        visa_switches = visa_resource_manager.open_resource(_entry_switches.get())
+    if input_dict['address_switch'].value in r_list:
+        visa_switches = visa_resource_manager.open_resource(input_dict['address_switch'].value)
         gui.tab_hardware.set_indicator(1, 'Connected.', 'green')
     else:
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
@@ -298,7 +304,7 @@ def on_button_connect() -> None:
 
     global cnc
     cnc = CNC()
-    success = cnc.connect(_entry_cnc.get())
+    success = cnc.connect(input_dict['address_serial'].value)
     if success:
         gui.tab_hardware.set_indicator(2, 'Connected.', 'green')
     else:
@@ -320,9 +326,7 @@ def on_button_auto_detect() -> None:
         return
 
     elif len(port_list) == 1:
-        text = tk.StringVar()
-        text.set(port_list[0].name)
-        _entry_cnc['textvariable'] = text
+        input_dict['address_serial'].set(port_list[0].name)
 
 
 def _debug_play_graphics() -> None:

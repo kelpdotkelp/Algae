@@ -44,7 +44,7 @@ def input_validate(vna: VNA) -> bool:
     elif not len(vna.sp_to_measure) >= 1:
         gui.bottom_bar.message_display('Select at least one S parameter.', 'red')
         valid = False
-    elif not os.path.isdir(gui.tab_home.get_output_dir()):
+    elif not os.path.isdir(input_dict['output_dir'].value):
         gui.bottom_bar.message_display('Invalid output directory.', 'red')
         valid = False
 

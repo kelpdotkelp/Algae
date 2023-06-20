@@ -12,6 +12,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import types
 
+from . import parameter
+
 _frame_hardware_box = None
 _status_indicators = []
 _button_hw_scan, _button_c_connect = None, None
@@ -48,10 +50,11 @@ def add_hardware(display_name: str, default_value: str = '',
 
     _hardware_count += 1
 
+    input_item = parameter.InputItemString(entry, display_name)
     if button is None:
-        return entry
+        return input_item
     else:
-        return entry, button
+        return input_item, button
 
 
 def create(frame_content_base: tk.Frame) -> tk.Frame:

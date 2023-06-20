@@ -12,12 +12,12 @@ Hardware:
 Author: Noah Stieler, 2023
 """
 import threading
-import tkinter
 import tkinter as tk
 
 import pyvisa as visa
 
 import gui
+from gui.parameter import input_dict
 import out
 from display_resources import display_resources
 from .data_handler import format_meta_data
@@ -30,15 +30,7 @@ VISA_ADDRESS_VNA = 'TCPIP0::Localhost::hislip0::INSTR'
 state = 'idle'
 
 vna = VNA(None)
-_entry_vna, _button_calib = None, None
-
-"""
-Each key is an input parameter and the value is a list.
-0 = the widget
-1 = parameter value
-2 = parameter display name
-"""
-input_param = {}
+_button_calib = None
 
 
 def main() -> None:
@@ -48,14 +40,18 @@ def main() -> None:
     gui.core.create_gui()
 
     # Set up input parameters
-    input_param['num_points'] = [gui.tab_home.add_parameter_num('Number of points'),
+    """input_param['num_points'] = [gui.tab_home.add_parameter_num('Number of points'),
                                  0, 'Number of points']
     input_param['ifbw'] = [gui.tab_home.add_parameter_num('IF bandwidth (Hz)'),
                            0, 'IF bandwidth (Hz)']
     input_param['freq_start'] = [gui.tab_home.add_parameter_num('Start frequency (Hz)'),
                                  0, 'Start frequency (Hz)']
     input_param['freq_stop'] = [gui.tab_home.add_parameter_num('Stop frequency (Hz)'),
-                                0, 'Stop frequency (Hz)']
+                                0, 'Stop frequency (Hz)']"""
+    input_dict['num_points'] = gui.tab_home.add_parameter_num('Number of points')
+    input_dict['ifbw'] = gui.tab_home.add_parameter_num('IF bandwidth (Hz)')
+    input_dict['freq_start'] = gui.tab_home.add_parameter_num('Start frequency (Hz)')
+    input_dict['freq_stop'] = gui.tab_home.add_parameter_num('Stop frequency (Hz)')
 
     # Define button functionality
     gui.bottom_bar.on_button_run(on_button_run)
@@ -63,17 +59,18 @@ def main() -> None:
     gui.tab_hardware.on_display_resources(display_resources)
 
     # Set up hardware gui
-    global _entry_vna, _button_calib
-    _entry_vna, _button_calib = gui.tab_hardware.add_hardware('VNA', default_value=VISA_ADDRESS_VNA,
-                                                              action=True, action_name='Calibrate')
+    global _button_calib
+    input_dict['address_vna'], _button_calib = \
+        gui.tab_hardware.add_hardware('VNA', default_value=VISA_ADDRESS_VNA,
+                                      action=True, action_name='Calibrate')
+
+    # Set up calibration selection
     _button_calib.configure(command=calibration.create_popup)
     _button_calib['state'] = tk.DISABLED
-
     calibration.on_apply_calib = on_apply_calib
 
     while not gui.core.app_terminated:
         gui.core.update()
-        get_gui_parameters()
 
         if state == 'idle':
             pass
@@ -89,7 +86,7 @@ def main() -> None:
             state = 'scan_finished'
 
         if state == 'scan_finished':
-            out.create_meta_file(format_meta_data(vna, gui.tab_home.get_description()))
+            out.create_meta_file(format_meta_data(vna, input_dict['description'].value))
             vna.save_snp(out.output['full_path'])
             gui.bottom_bar.message_display('Scan saved.', 'green')
             state = 'idle'
@@ -107,21 +104,21 @@ def on_button_run() -> None:
 
     vna.set_parameter_ranges()
 
-    valid = input_validate(vna, input_param)
+    valid = input_validate(vna)
     if not valid:
         return
 
     gui.bottom_bar.message_clear()
 
     """Initialize vna parameters"""
-    vna.data_point_count = int(input_param['num_points'][1])
-    vna.if_bandwidth = input_param['ifbw'][1]
-    vna.freq_start = input_param['freq_start'][1]
-    vna.freq_stop = input_param['freq_stop'][1]
+    vna.data_point_count = int(input_dict['num_points'].value)
+    vna.if_bandwidth = input_dict['ifbw'].value
+    vna.freq_start = input_dict['freq_start'].value
+    vna.freq_stop = input_dict['freq_stop'].value
 
     vna.initialize()
 
-    out.init_root(gui.tab_home.get_output_dir(), gui.tab_home.get_name())
+    out.init_root(input_dict['output_dir'].value, input_dict['output_name'].value)
 
     global state
     state = 'scan'
@@ -135,8 +132,8 @@ def scan_for_hardware() -> None:
     global vna
     visa_vna = None
 
-    if _entry_vna.get() in r_list:
-        visa_vna = visa_resource_manager.open_resource(_entry_vna.get())
+    if input_dict['address_vna'].value in r_list:
+        visa_vna = visa_resource_manager.open_resource(input_dict['address_vna'].value)
 
         _button_calib['state'] = tk.ACTIVE
         gui.tab_hardware.set_indicator(0, 'Resource found.', 'blue')
@@ -160,19 +157,3 @@ def on_apply_calib() -> None:
     gui.tab_hardware.set_indicator(0, 'Calibrating...', 'blue')
     gui.core.update_during_thread_wait(t)
     gui.tab_hardware.set_indicator(0, 'Calibrated.', 'green')
-
-
-def get_gui_parameters() -> None:
-    """Gets data from the tkinter widgets and updates all
-    the parameters. For numeric entries, if the input is invalid
-    the parameter is set to inf. This will correctly throw an
-    error when checking parameters."""
-    try:
-        for key in input_param:
-            input_param[key][1] = input_param[key][0].get()
-            try:
-                input_param[key][1] = float(input_param[key][1])
-            except ValueError:
-                input_param[key][1] = float('inf')
-    except tkinter.TclError:
-        pass
