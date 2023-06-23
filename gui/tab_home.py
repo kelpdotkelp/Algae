@@ -20,14 +20,13 @@ from tkinter import filedialog
 import tkinter.ttk as ttk
 
 from . import parameter
+from .button import *
 
 canvas = None
 canvas_size = 0
 
 _frame_parameter_box = None
 _parameter_row_count = 0
-
-_button_file = None
 
 # Used when setting up a row of checkboxes
 _column_count = 0
@@ -145,10 +144,10 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     parameter.input_dict['output_dir'] = \
         parameter.InputItemString(entry_file_path, display_name)
 
-    global _button_file
-    _button_file = ttk.Button(frame_path, text='. . .', width=5)
-    _button_file.configure(command=_on_file_press)
-    _button_file.grid(row=0, column=1)
+    button_fe = ttk.Button(frame_path, text='. . .', width=5)
+    button_fe.configure(command=_on_file_press)
+    button_fe.grid(row=0, column=1)
+    button_dict['file_exp'] = ButtonItem(button_fe)
 
     # Name
     display_name = 'Name'

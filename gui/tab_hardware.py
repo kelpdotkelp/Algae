@@ -7,18 +7,22 @@ Sets up and handles the hardware tab.
 
 Author: Noah Stieler, 2023
 """
+from .parameter import *
+from .button import *
 
-import tkinter as tk
-import tkinter.ttk as ttk
-import types
-
-from . import parameter
+target_selected = 'circular'
+target_types = ('Circular', 'Rectangular')
 
 _frame_hardware_box = None
 _status_indicators = []
-_button_hw_scan, _button_c_connect = None, None
-_button_set_origin = None
 _hardware_count = 0
+
+# Holds target dimensions
+_frame_circ, _frame_rect = None, None
+
+
+def set_indicator(index: int, message: str, color: str) -> None:
+    _status_indicators[index].configure(text=message, foreground=color)
 
 
 def add_hardware(display_name: str, default_value: str = '',
@@ -51,11 +55,12 @@ def add_hardware(display_name: str, default_value: str = '',
 
     _hardware_count += 1
 
-    input_item = parameter.InputItemString(entry, display_name)
+    input_item = InputItemString(entry, display_name)
+    button_item = ButtonItem(button)
     if button is None:
         return input_item
     else:
-        return input_item, button
+        return input_item, button_item
 
 
 def create(frame_content_base: tk.Frame) -> tk.Frame:
@@ -85,12 +90,13 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     frame_buttons.columnconfigure(index=1, weight=1)
     frame_buttons.pack(pady=pady, anchor='w')
 
-    global _button_hw_scan, _button_c_connect
-    _button_hw_scan = ttk.Button(frame_buttons, text='Connect')
-    _button_c_connect = ttk.Button(frame_buttons, text='Display resources')
+    button_connect = ttk.Button(frame_buttons, text='Connect')
+    button_connect.grid(row=0, column=0)
+    button_dict['connect'] = ButtonItem(button_connect)
 
-    _button_hw_scan.grid(row=0, column=0)
-    _button_c_connect.grid(row=0, column=1, padx=15)
+    button_dr = ttk.Button(frame_buttons, text='Display resources')
+    button_dr.grid(row=0, column=1, padx=15)
+    button_dict['disp_res'] = ButtonItem(button_dr)
 
     _create_positioning(frame_hardware)
 
@@ -98,7 +104,6 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
 
 
 def _create_positioning(frame_hardware: tk.Frame) -> None:
-    global _button_set_origin
     pady_head = 15
     pady = 10
     padx = 7
@@ -117,28 +122,66 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     # Set origin
     frame_origin = tk.Frame(frame_pos_box)
     frame_origin.pack(anchor='w', padx=padx, pady=pady)
+
     label_set_origin = tk.Label(frame_origin, text='Origin set.',
                                 background=frame_pos_box['background'])
-    _button_set_origin = ttk.Button(frame_origin, text='Set origin')
-    _button_set_origin.grid(row=0, column=0)
-    label_set_origin.grid(row=0, column=1)
+    label_set_origin.grid(row=0, column=1, padx=20)
+
+    button_so = ttk.Button(frame_origin, text='Set origin')
+    button_so.grid(row=0, column=0)
+    button_dict['set_origin'] = ButtonItem(button_so)
 
     # Select target type
     frame_type = tk.Frame(frame_pos_box)
     frame_type.pack(anchor='w', padx=padx, pady=pady)
     frame_type.rowconfigure(index=0, weight=1)
 
-    label_target_type = tk.Label(frame_type, text='Target type:\t', justify=tk.LEFT)
+    label_target_type = tk.Label(frame_type, text='Target type: ', justify=tk.LEFT)
     label_target_type.grid(row=0, column=0)
 
+    optionmenu_var = tk.StringVar()
+    optionmenu = ttk.OptionMenu(frame_type, optionmenu_var,
+                                target_types[0], *target_types, command=_optionmenu_changed)
+    optionmenu.grid(row=0, column=1)
 
-def on_connect(function: types.FunctionType) -> None:
-    _button_hw_scan.configure(command=function)
+    # Target specs
+    global _frame_circ
+    _frame_circ = tk.Frame(frame_pos_box)
+    _frame_circ.rowconfigure(index=0, weight=1)
+
+    label_radius = tk.Label(_frame_circ, text='Radius (mm)\t')
+    label_radius.grid(row=0, column=0, sticky='w')
+    entry_radius = tk.Entry(_frame_circ, justify=tk.RIGHT)
+    entry_radius.grid(row=0, column=1, sticky='e', padx=7)
+    input_dict['target_radius'] = InputItemNumber(entry_radius, 'Radius (mm)', 0)
+
+    global _frame_rect
+    _frame_rect = tk.Frame(frame_pos_box)
+    _frame_rect.rowconfigure(index=0, weight=1)
+
+    label_l = tk.Label(_frame_rect, text='Length (mm)\t')
+    label_l.grid(row=0, column=0, sticky='w')
+    entry_l = tk.Entry(_frame_rect, justify=tk.RIGHT)
+    entry_l.grid(row=0, column=1, sticky='e', padx=7)
+    input_dict['target_length'] = InputItemNumber(entry_l, 'Length (mm)', 0)
+
+    label_w = tk.Label(_frame_rect, text='Width (mm)\t')
+    label_w.grid(row=0, column=2, sticky='w')
+    entry_w = tk.Entry(_frame_rect, justify=tk.RIGHT)
+    entry_w.grid(row=0, column=3, sticky='e', padx=7)
+    input_dict['target_width'] = InputItemNumber(entry_w, 'Width (mm)', 0)
+
+    _optionmenu_changed('circular')
 
 
-def on_display_resources(function: types.FunctionType) -> None:
-    _button_c_connect.configure(command=function)
+def _optionmenu_changed(*args) -> None:
+    """Args is a tuple containing the selected option at index 0."""
+    global target_selected
+    target_selected = args[0].lower()
 
-
-def set_indicator(index: int, message: str, color: str) -> None:
-    _status_indicators[index].configure(text=message, foreground=color)
+    if target_selected == 'circular':
+        _frame_rect.pack_forget()
+        _frame_circ.pack(anchor='w', padx=7, pady=10)
+    elif target_selected == 'rectangular':
+        _frame_circ.pack_forget()
+        _frame_rect.pack(anchor='w', padx=7, pady=10)

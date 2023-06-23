@@ -17,6 +17,7 @@ import serial.tools.list_ports
 
 import gui
 from gui.parameter import input_dict
+from gui.button import button_dict
 import out
 from cnc import Point, CNC
 from display_resources import display_resources
@@ -36,7 +37,6 @@ port_refl = refl_range[0]
 vna, switches = None, None
 
 cnc = CNC()
-_button_auto_detect = None
 
 pos_list = [Point(20, 20),
             Point(-20, 20),
@@ -94,22 +94,21 @@ def main() -> None:
     input_dict['S21'].toggle()
 
     # Set up hardware gui
-    global _button_auto_detect
     input_dict['address_vna'] = gui.tab_hardware.add_hardware('VNA', default_value='GPIB0::16::INSTR')
     input_dict['address_switch'] = gui.tab_hardware.add_hardware('Switches', default_value='GPIB0::15::INSTR')
 
-    input_dict['address_serial'], _button_auto_detect = \
+    input_dict['address_serial'], button_dict['auto_detect'] = \
         gui.tab_hardware.add_hardware('CNC', default_value='',
                                       action=True, action_name='Auto-detect')
 
-    _button_auto_detect['state'] = tk.ACTIVE
-    _button_auto_detect.configure(command=on_button_auto_detect)
-
     # Define button functionality
-    gui.tab_hardware.on_connect(on_button_connect)
-    gui.tab_hardware.on_display_resources(display_resources)
-    gui.bottom_bar.on_button_run(on_button_run)
-    gui.bottom_bar.on_button_stop(abort_scan)
+    button_dict['connect'].command(on_button_connect)
+    button_dict['disp_res'].command(display_resources)
+    button_dict['run'].command(on_button_run)
+    button_dict['stop'].command(abort_scan)
+
+    button_dict['auto_detect'].command(on_button_auto_detect)
+    button_dict['auto_detect'].toggle_state()
 
     """     
         Main application loop   
@@ -171,7 +170,7 @@ def main() -> None:
 
                 cnc.set_position(Point(0, 0))
 
-                gui.bottom_bar.toggle_button_stop()
+                button_dict['stop'].toggle_state()
 
                 state = 'idle'
             else:
@@ -256,7 +255,7 @@ def on_button_run() -> None:
     port_refl = refl_range[0]
     switches.initialize()
 
-    gui.bottom_bar.toggle_button_stop()
+    button_dict['stop'].toggle_state()
 
     global state
     state = 'scan'
@@ -267,7 +266,7 @@ def abort_scan() -> None:
         out.out_file_complete(s_parameter)
 
     gui.bottom_bar.progress_bar_set(0)
-    gui.bottom_bar.toggle_button_stop()
+    button_dict['stop'].toggle_state()
 
     canvas.port_reset()
 

@@ -18,6 +18,7 @@ import pyvisa as visa
 
 import gui
 from gui.parameter import input_dict
+from gui.button import button_dict
 import out
 from display_resources import display_resources
 from .data_handler import format_meta_data
@@ -30,7 +31,6 @@ VISA_ADDRESS_VNA = 'TCPIP0::Localhost::hislip0::INSTR'
 state = 'idle'
 
 vna = VNA(None)
-_button_calib = None
 
 
 def main() -> None:
@@ -46,19 +46,18 @@ def main() -> None:
     input_dict['freq_stop'] = gui.tab_home.add_parameter_num('Stop frequency (Hz)')
 
     # Define button functionality
-    gui.bottom_bar.on_button_run(on_button_run)
-    gui.tab_hardware.on_connect(on_button_connect)
-    gui.tab_hardware.on_display_resources(display_resources)
+    button_dict['connect'].command(on_button_connect)
+    button_dict['disp_res'].command(display_resources)
+    button_dict['run'].command(on_button_run)
 
     # Set up hardware gui
-    global _button_calib
-    input_dict['address_vna'], _button_calib = \
+    input_dict['address_vna'], button_dict['calibrate'] = \
         gui.tab_hardware.add_hardware('VNA', default_value=VISA_ADDRESS_VNA,
                                       action=True, action_name='Calibrate')
 
     # Set up calibration selection
-    _button_calib.configure(command=calibration.create_popup)
-    _button_calib['state'] = tk.DISABLED
+    button_dict['calibrate'].command(calibration.create_popup)
+    button_dict['calibrate'].set_state(0)
     calibration.on_apply_calib = on_apply_calib
 
     while not gui.core.app_terminated:
@@ -127,10 +126,10 @@ def on_button_connect() -> None:
     if input_dict['address_vna'].value in r_list:
         visa_vna = visa_resource_manager.open_resource(input_dict['address_vna'].value)
 
-        _button_calib['state'] = tk.ACTIVE
+        button_dict['calibrate'].set_state(1)
         gui.tab_hardware.set_indicator(0, 'Resource found.', 'blue')
     else:
-        _button_calib['state'] = tk.DISABLED
+        button_dict['calibrate'].set_state(0)
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
     vna = VNA(visa_vna)
 

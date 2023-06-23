@@ -7,16 +7,12 @@ Sets up and handles the bottom task bar.
 
 Author: Noah Stieler, 2023
 """
-
-import tkinter as tk
-import tkinter.ttk as ttk
-import types
+from gui.button import *
 
 enable_button_stop = True
 
 progress_bar = None
 _label_message = None
-_button_run, _button_stop = None, None
 
 
 def create(frame_base: tk.Frame) -> None:
@@ -40,13 +36,14 @@ def create(frame_base: tk.Frame) -> None:
 
     frame_right.rowconfigure(index=0, weight=1)
 
-    global _button_run, _button_stop
-    _button_run = ttk.Button(frame_right, text='Run')
-    _button_stop = ttk.Button(frame_right, text='Stop', state=tk.DISABLED)
-
-    _button_run.grid(row=0, column=0, padx=15)
+    button_run = ttk.Button(frame_right, text='Run')
+    button_stop = ttk.Button(frame_right, text='Stop', state=tk.DISABLED)
+    button_run.grid(row=0, column=0, padx=15)
     if enable_button_stop:
-        _button_stop.grid(row=0, column=1, padx=15)
+        button_stop.grid(row=0, column=1, padx=15)
+
+    button_dict['run'] = ButtonItem(button_run)
+    button_dict['stop'] = ButtonItem(button_stop)
 
 
 def message_display(message: str, color: str) -> None:
@@ -55,21 +52,6 @@ def message_display(message: str, color: str) -> None:
 
 def message_clear() -> None:
     _label_message.config(text='')
-
-
-def on_button_run(function: types.FunctionType) -> None:
-    _button_run.configure(command=function)
-
-
-def on_button_stop(function: types.FunctionType) -> None:
-    _button_stop.configure(command=function)
-
-
-def toggle_button_stop() -> None:
-    if str(_button_stop['state']) == tk.DISABLED:
-        _button_stop['state'] = tk.ACTIVE
-    else:
-        _button_stop['state'] = tk.DISABLED
 
 
 def progress_bar_set(value) -> None:
