@@ -22,6 +22,10 @@ class InputItem:
     widget: Widget
     name: str
 
+    def _entry_set(self, text: str) -> None:
+        tk_text = tkinter.StringVar()
+        tk_text.set(text)
+        self.widget.config(text=tk_text)
 
 @dataclass
 class InputItemNumber(InputItem):
@@ -36,6 +40,9 @@ class InputItemNumber(InputItem):
         except ValueError:
             self.value = float('inf')
 
+    def set(self, text: str) -> None:
+        self._entry_set(text)
+
 
 @dataclass
 class InputItemString(InputItem):
@@ -45,9 +52,7 @@ class InputItemString(InputItem):
         self.value = self.widget.get()
 
     def set(self, text: str) -> None:
-        tk_text = tkinter.StringVar()
-        tk_text.set(text)
-        self.widget.config(text=tk_text)
+        self._entry_set(text)
 
 
 @dataclass

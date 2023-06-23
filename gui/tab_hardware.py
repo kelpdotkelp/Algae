@@ -19,10 +19,15 @@ _hardware_count = 0
 
 # Holds target dimensions
 _frame_circ, _frame_rect = None, None
+_label_set_origin = None
 
 
 def set_indicator(index: int, message: str, color: str) -> None:
     _status_indicators[index].configure(text=message, foreground=color)
+
+
+def set_indicator_origin() -> None:
+    _label_set_origin.configure(text='Origin set.', foreground='green')
 
 
 def add_hardware(display_name: str, default_value: str = '',
@@ -123,20 +128,40 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     frame_origin = tk.Frame(frame_pos_box)
     frame_origin.pack(anchor='w', padx=padx, pady=pady)
 
-    label_set_origin = tk.Label(frame_origin, text='Origin set.',
-                                background=frame_pos_box['background'])
-    label_set_origin.grid(row=0, column=1, padx=20)
+    global _label_set_origin
+    _label_set_origin = tk.Label(frame_origin, text='',
+                                 background=frame_pos_box['background'])
+    _label_set_origin.grid(row=0, column=1, padx=20)
 
     button_so = ttk.Button(frame_origin, text='Set origin')
     button_so.grid(row=0, column=0)
     button_dict['set_origin'] = ButtonItem(button_so)
+
+    # Working area
+    label_wa = tk.Label(frame_pos_box, text='Working area', justify=tk.LEFT)
+    label_wa.pack(anchor='w', padx=padx, pady=pady)
+
+    frame_wa = tk.Frame(frame_pos_box)
+    frame_wa.pack(anchor='w', padx=padx, pady=pady)
+
+    label_radius = tk.Label(frame_wa, text='Radius (mm)\t')
+    label_radius.grid(row=0, column=0, sticky='w')
+    entry_radius = tk.Entry(frame_wa, justify=tk.RIGHT)
+    entry_radius.grid(row=0, column=1, sticky='e', padx=7)
+    input_dict['wa_radius'] = InputItemNumber(entry_radius, 'Radius (mm)', 0)
+
+    label_pad = tk.Label(frame_wa, text='Padding (mm)\t')
+    label_pad.grid(row=0, column=2, sticky='w')
+    entry_pad = tk.Entry(frame_wa, justify=tk.RIGHT)
+    entry_pad.grid(row=0, column=3, sticky='e', padx=7)
+    input_dict['wa_pad'] = InputItemNumber(entry_pad, 'Padding (mm)', 0)
 
     # Select target type
     frame_type = tk.Frame(frame_pos_box)
     frame_type.pack(anchor='w', padx=padx, pady=pady)
     frame_type.rowconfigure(index=0, weight=1)
 
-    label_target_type = tk.Label(frame_type, text='Target type: ', justify=tk.LEFT)
+    label_target_type = tk.Label(frame_type, text='Target type ', justify=tk.LEFT)
     label_target_type.grid(row=0, column=0)
 
     optionmenu_var = tk.StringVar()

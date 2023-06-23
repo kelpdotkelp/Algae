@@ -12,9 +12,10 @@ import os.path
 import gui
 from gui.parameter import input_dict
 from .imaging import VNA
+from cnc import CNC
 
 
-def input_validate(vna: VNA) -> bool:
+def input_validate(vna: VNA, cnc: CNC) -> bool:
     """Checks all user input for errors/invalid entries"""
     check_list = ['num_points', 'ifbw', 'freq_start', 'freq_stop', 'power']
 
@@ -32,5 +33,17 @@ def input_validate(vna: VNA) -> bool:
     elif not os.path.isdir(input_dict['output_dir'].value):
         gui.bottom_bar.message_display('Invalid output directory.', 'red')
         return False
+    elif not cnc.origin:
+        gui.bottom_bar.message_display('CNC origin has not been set.', 'red')
+        return False
+    elif not (1 <= input_dict['wa_radius'].value <= float('inf')):
+        gui.bottom_bar.message_display('Invalid working area radius.', 'red')
+        return False
+    elif not (1 <= input_dict['wa_pad'].value <= float('inf')):
+        gui.bottom_bar.message_display('Invalid padding.', 'red')
+        return False
+    elif gui.tab_hardware.target_selected == 'circular' \
+            and not 0 < input_dict['target_radius'].value <= float('inf'):
+        gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
 
     return True

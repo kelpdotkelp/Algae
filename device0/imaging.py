@@ -163,7 +163,7 @@ class Switches:
     Previous software said that trans must be set before refl but
     both orders worked in my tests"""
     PORT_MIN = 1
-    PORT_MAX = 10
+    PORT_MAX = 24
 
     debounce_time = 0.03  # seconds
 

@@ -16,11 +16,8 @@ import time
 from dataclasses import dataclass
 from math import sqrt
 
-wa_radius_measured = 120
-wa_padding = 20
-obj_radius = 20
-
-is_origin_set = False
+import gui.tab_hardware
+from gui.parameter import input_dict
 
 
 @dataclass
@@ -33,10 +30,15 @@ class Point:
         return sqrt(pow(self.x, 2) + pow(self.y, 2))
 
 
+target_radius = 20
+target_pos = Point(0, 0)
+
+
 class CNC:
 
     def __init__(self):
         self.ser = None
+        self.origin = False
 
     def __del__(self):
         if self.ser is not None:
@@ -64,13 +66,12 @@ class CNC:
         """Sets the origin at the targets current position."""
         self._send_command('G90')  # Absolute positioning
         self._send_command('G92 X0 Y0')  # Set origin point
-        global is_origin_set
-        is_origin_set = True
+        self.origin = True
 
     def set_position(self, new_pos: Point) -> bool:
         """Attempts to move to a new position. Returns false
         if position is outside working area."""
-        wa_radius = wa_radius_measured - wa_padding - obj_radius
+        wa_radius = input_dict['wa_radius'] - input_dict['wa_pad'] - target_radius
 
         if new_pos.mag < wa_radius:
             self._send_command(f'G0 X{new_pos.x} Y{new_pos.y}')
@@ -86,3 +87,12 @@ class CNC:
         for item in out:
             item.decode()
         print(out)
+
+
+def update_target_dim():
+    global target_radius
+    if gui.tab_hardware.target_selected == 'circular':
+        if 0 < input_dict['target_radius'].value <= float('inf'):
+            target_radius = input_dict['target_radius'].value
+        else:
+            target_radius = 0

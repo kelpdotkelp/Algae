@@ -19,13 +19,16 @@ import gui
 from gui.parameter import input_dict
 from gui.button import button_dict
 import out
-from cnc import Point, CNC
+from cnc import Point, CNC, update_target_dim
 from display_resources import display_resources
 
 from . import data_handler
 from . import canvas
 from .imaging import VNA, Switches
 from .input_validate import input_validate
+
+WORKING_AREA_RADIUS = 120
+WORKING_AREA_PADDING = 20
 
 state = 'idle'
 
@@ -100,6 +103,8 @@ def main() -> None:
     input_dict['address_serial'], button_dict['auto_detect'] = \
         gui.tab_hardware.add_hardware('CNC', default_value='',
                                       action=True, action_name='Auto-detect')
+    input_dict['wa_radius'].set(WORKING_AREA_RADIUS)
+    input_dict['wa_pad'].set(WORKING_AREA_PADDING)
 
     # Define button functionality
     button_dict['connect'].command(on_button_connect)
@@ -107,8 +112,11 @@ def main() -> None:
     button_dict['run'].command(on_button_run)
     button_dict['stop'].command(abort_scan)
 
+    button_dict['set_origin'].command(on_set_origin)
+    button_dict['set_origin'].set_state(1)  # TODO defaults to off state.
+
     button_dict['auto_detect'].command(on_button_auto_detect)
-    button_dict['auto_detect'].toggle_state()
+    button_dict['auto_detect'].set_state(1)
 
     """     
         Main application loop   
@@ -117,8 +125,9 @@ def main() -> None:
         global port_tran, port_refl
 
         gui.core.update()
-
         gui.tab_home.draw_canvas(canvas.update)
+
+        update_target_dim()
 
         # _debug_play_graphics()
 
@@ -224,7 +233,9 @@ def on_button_run() -> None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
 
-    valid = input_validate(vna)
+    # TODO send check resources are still connected - *IDN?, serial
+
+    valid = input_validate(vna, cnc)
     if not valid:
         return
 
@@ -237,7 +248,6 @@ def on_button_run() -> None:
     pos_index = 0
 
     """TEMP"""
-    cnc.set_origin()
     cnc.set_position(pos_list[pos_index])
 
     """Initialize output file structure"""
@@ -302,8 +312,10 @@ def on_button_connect() -> None:
     success = cnc.connect(input_dict['address_serial'].value)
     if success:
         gui.tab_hardware.set_indicator(2, 'Connected.', 'green')
+        button_dict['set_origin'].set_state(1)
     else:
         gui.tab_hardware.set_indicator(2, 'Resource not found.', 'red')
+        button_dict['set_origin'].set_state(0)
 
 
 def update_progress_bar() -> None:
@@ -322,6 +334,13 @@ def on_button_auto_detect() -> None:
 
     elif len(port_list) == 1:
         input_dict['address_serial'].set(port_list[0].name)
+
+
+def on_set_origin() -> None:
+    # TODO remove this comment!
+    # cnc.set_origin()
+    canvas.set_state_origin(False)
+    gui.tab_hardware.set_indicator_origin()
 
 
 def _debug_play_graphics() -> None:
