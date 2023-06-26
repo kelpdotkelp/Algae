@@ -48,8 +48,9 @@ for j in range(0, Switches.PORT_MAX):
 def update() -> None:
     if not _init:
         _init_draw()
-        gui.tab_home.canvas.move(_target, 50, 50)
 
+    # Not updating these on function calls because
+    # There has to be a check for the changing of these values.
     if _wa_radius != input_dict['wa_radius'].value \
             or _wa_pad != input_dict['wa_pad'].value \
             or _target_radius != cnc.core.target_radius:
@@ -74,7 +75,7 @@ def update() -> None:
         gui.tab_home.canvas.itemconfigure(_target, width=0)
 
 
-def _init_draw() -> None:
+def _init_draw(target_x: float = 0, target_y: float = 0) -> None:
     global _line_list, _init
 
     dim = gui.tab_home.canvas_size
@@ -123,9 +124,9 @@ def _init_draw() -> None:
     if _wa_radius != 0:
         global _target, _target_radius
         _target_radius = cnc.core.target_radius
-        con = radius*_radius_in/_wa_radius
-        x = cnc.core.target_pos.x * con
-        y = cnc.core.target_pos.y * con
+        con = radius * _radius_in / _wa_radius
+        x = target_x * con
+        y = target_y * con
         _target = _create_circle(centre[0] + x,
                                  centre[1] - y, radius=cnc.core.target_radius * con,
                                  width=2, outline='black', fill='')
@@ -160,6 +161,10 @@ def set_state_origin(state: bool) -> None:
 
     for i in range(len(_cross)):
         gui.tab_home.canvas.itemconfigure(_cross[i], fill=_cross_state)
+
+
+def set_target_pos(x: float, y: float) -> None:
+    _init_draw(x, y)
 
 
 def _create_circle(x: float, y: float, radius: float, width: float,

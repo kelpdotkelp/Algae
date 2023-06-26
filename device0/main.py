@@ -41,12 +41,6 @@ vna, switches = None, None
 
 cnc = CNC()
 
-pos_list = [Point(20, 20),
-            Point(-20, 20),
-            Point(-20, -20),
-            Point(20, -20)]
-pos_index = 0
-
 """
 Bug
 VisaIOError: VI_ERROR_INV_OBJECT 
@@ -172,16 +166,14 @@ def main() -> None:
             for s_parameter in vna.sp_to_measure:
                 out.out_file_complete(s_parameter)
 
-            global pos_index
-            pos_index += 1
-
-            if pos_index >= len(pos_list):
+            if cnc.pos_index + 1 >= len(cnc.pos_list):
                 vna.close()
                 switches.close()
 
                 try:
                     cnc.set_position(Point(0, 0))
-                except GCodeCommandException as e:
+                    canvas.set_target_pos(cnc.x, cnc.y)
+                except CNCException as e:
                     e.display()
                     abort_scan()
 
@@ -189,18 +181,20 @@ def main() -> None:
 
                 state = 'idle'
             else:
+                # Go to next position
+                try:
+                    cnc.next_position()
+                    canvas.set_target_pos(cnc.x, cnc.y)
+                except CNCException as e:
+                    e.display()
+                    abort_scan()
+
                 # Set up new output folder
                 out.mkdir_new_pos()
                 for s_parameter in vna.sp_to_measure:
                     meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                              pos_list[pos_index].x, pos_list[pos_index].y)
+                                                              cnc.x, cnc.y)
                     out.out_file_init(s_parameter, meta_dict, vna.freq_list)
-
-                try:
-                    cnc.set_position(pos_list[pos_index])
-                except GCodeCommandException as e:
-                    e.display()
-                    abort_scan()
 
                 port_tran = tran_range[0]
                 port_refl = refl_range[0]
@@ -253,13 +247,12 @@ def on_button_run() -> None:
 
     vna.initialize()
 
-    """Initialize CNC"""
-    global pos_index
-    pos_index = 0
+    cnc.init_pos_index()
 
     try:
-        cnc.set_position(pos_list[pos_index])
-    except GCodeCommandException as e:
+        cnc.next_position()
+        canvas.set_target_pos(cnc.x, cnc.y)
+    except CNCException as e:
         e.display()
         return
 
@@ -269,7 +262,7 @@ def on_button_run() -> None:
 
     for s_parameter in vna.sp_to_measure:
         meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                  pos_list[pos_index].x, pos_list[pos_index].y)
+                                                  cnc.x, cnc.y)
         out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
     """Initialize switches"""
@@ -352,7 +345,7 @@ def on_button_auto_detect() -> None:
 def on_set_origin() -> None:
     try:
         cnc.set_origin()
-    except GCodeCommandException as e:
+    except CNCException as e:
         e.display()
         return
     canvas.set_state_origin(False)
