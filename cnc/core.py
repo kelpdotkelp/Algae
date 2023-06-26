@@ -8,9 +8,6 @@ distances are always in millimetres.
 Author: Noah Stieler, 2023
 """
 
-# TODO command status displayed on gui.
-# TODO command error handling
-
 import serial
 import time
 from dataclasses import dataclass
@@ -64,17 +61,23 @@ class CNC:
 
     def set_origin(self) -> None:
         """Sets the origin at the targets current position."""
-        self._send_command('G90')  # Absolute positioning
-        self._send_command('G92 X0 Y0')  # Set origin point
+        try:
+            self._send_command('G90')  # Absolute positioning
+            self._send_command('G92 X0 Y0')  # Set origin point
+        except GCodeCommandException:
+            raise
         self.origin = True
 
     def set_position(self, new_pos: Point) -> bool:
         """Attempts to move to a new position. Returns false
         if position is outside working area."""
-        wa_radius = input_dict['wa_radius'] - input_dict['wa_pad'] - target_radius
+        wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
 
         if new_pos.mag < wa_radius:
-            self._send_command(f'G0 X{new_pos.x} Y{new_pos.y}')
+            try:
+                self._send_command(f'G0 X{new_pos.x} Y{new_pos.y}')
+            except GCodeCommandException:
+                raise
             time.sleep(2)  # TODO change me!
             return True
         else:
@@ -84,9 +87,20 @@ class CNC:
         self.ser.write((cmd + '\n').encode('utf-8'))
         out = self.ser.readlines()
 
-        for item in out:
-            item.decode()
-        print(out)
+        for i in range(len(out)):
+            out[i].decode()
+            out[i] = out[i][:-2]
+
+            if out[i] != b'ok':
+                raise GCodeCommandException(cmd)
+
+
+class GCodeCommandException(Exception):
+    def __init__(self, cmd: str):
+        self.cmd = cmd
+
+    def display(self):
+        gui.bottom_bar.message_display('GCODE error with command: ' + self.cmd, 'red')
 
 
 def update_target_dim():

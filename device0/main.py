@@ -19,7 +19,7 @@ import gui
 from gui.parameter import input_dict
 from gui.button import button_dict
 import out
-from cnc import Point, CNC, update_target_dim
+from cnc import *
 from display_resources import display_resources
 
 from . import data_handler
@@ -76,6 +76,7 @@ Show positions on gui
 
 
 def main() -> None:
+    global port_tran, port_refl
     global state
 
     gui.core.create_gui()
@@ -113,7 +114,7 @@ def main() -> None:
     button_dict['stop'].command(abort_scan)
 
     button_dict['set_origin'].command(on_set_origin)
-    button_dict['set_origin'].set_state(1)  # TODO defaults to off state.
+    button_dict['set_origin'].set_state(0)
 
     button_dict['auto_detect'].command(on_button_auto_detect)
     button_dict['auto_detect'].set_state(1)
@@ -122,8 +123,6 @@ def main() -> None:
         Main application loop   
     """
     while not gui.core.app_terminated:
-        global port_tran, port_refl
-
         gui.core.update()
         gui.tab_home.draw_canvas(canvas.update)
 
@@ -166,6 +165,9 @@ def main() -> None:
             scan_finished = update_ports()
             update_progress_bar()
 
+            if scan_finished:
+                state = scan_finished
+
         if state == 'scan_finished':
             for s_parameter in vna.sp_to_measure:
                 out.out_file_complete(s_parameter)
@@ -177,7 +179,11 @@ def main() -> None:
                 vna.close()
                 switches.close()
 
-                cnc.set_position(Point(0, 0))
+                try:
+                    cnc.set_position(Point(0, 0))
+                except GCodeCommandException as e:
+                    e.display()
+                    abort_scan()
 
                 button_dict['stop'].toggle_state()
 
@@ -190,7 +196,11 @@ def main() -> None:
                                                               pos_list[pos_index].x, pos_list[pos_index].y)
                     out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
-                cnc.set_position(pos_list[pos_index])
+                try:
+                    cnc.set_position(pos_list[pos_index])
+                except GCodeCommandException as e:
+                    e.display()
+                    abort_scan()
 
                 port_tran = tran_range[0]
                 port_refl = refl_range[0]
@@ -247,8 +257,11 @@ def on_button_run() -> None:
     global pos_index
     pos_index = 0
 
-    """TEMP"""
-    cnc.set_position(pos_list[pos_index])
+    try:
+        cnc.set_position(pos_list[pos_index])
+    except GCodeCommandException as e:
+        e.display()
+        return
 
     """Initialize output file structure"""
     out.init_root(input_dict['output_dir'].value, input_dict['output_name'].value)
@@ -337,8 +350,11 @@ def on_button_auto_detect() -> None:
 
 
 def on_set_origin() -> None:
-    # TODO remove this comment!
-    # cnc.set_origin()
+    try:
+        cnc.set_origin()
+    except GCodeCommandException as e:
+        e.display()
+        return
     canvas.set_state_origin(False)
     gui.tab_hardware.set_indicator_origin()
 

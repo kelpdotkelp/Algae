@@ -36,10 +36,13 @@ class VNA:
         self.p_ranges = {}
         self._set_parameter_ranges()
 
-        self.freq_list = []
+    @property
+    def freq_list(self) -> list:
+        li = []
         inc = (input_dict['freq_stop'].value - input_dict['freq_start'].value) / (input_dict['num_points'].value - 1)
         for i in range(int(input_dict['num_points'].value)):
-            self.freq_list.append(input_dict['freq_start'].value + i * inc)
+            li.append(input_dict['freq_start'].value + i * inc)
+        return li
 
     def __del__(self):
         if self.resource is None:
