@@ -97,5 +97,6 @@ def out_file_data_write(s_parameter: str, tran: int, refl: int,
 
 
 def out_file_complete(s_parameter: str) -> None:
-    _open_files[s_parameter].write('\n}')  # Required for JSON formatting
-    _open_files[s_parameter].close()
+    if not _open_files[s_parameter].closed:
+        _open_files[s_parameter].write('\n}')  # Required for JSON formatting
+        _open_files[s_parameter].close()
