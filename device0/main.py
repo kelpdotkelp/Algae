@@ -152,9 +152,6 @@ def main() -> None:
                 out.out_file_complete(s_parameter)
 
             if cnc.pos_index + 1 >= len(cnc.pos_list):
-                vna.close()
-                switches.close()
-
                 try:
                     cnc.set_position(cnc.pos, Point(0, 0))
                     canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
@@ -235,19 +232,22 @@ def on_button_run() -> None:
     """import random
     li = []
     wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
-    for i in range(0, 5):
+    for i in range(0, 3):
         angle = random.random()*2*math.pi
         mag = random.random()*wa_radius
         p = Point(mag*math.cos(angle), mag*math.sin(angle))
         li.append(p)
     cnc.pos_list = li"""
 
-    cnc.pos_list = [
+    """cnc.pos_list = [
             Point(40, 40),
             Point(-40, 40),
             Point(-40, -40),
             Point(40, -40)
-        ]
+        ]"""
+    cnc.pos_list = [
+        Point(-40, -40)
+    ]
     cnc.init_pos_index()
 
     try:
@@ -327,8 +327,7 @@ def on_button_connect() -> None:
 
 def update_progress_bar() -> None:
     try:
-        pair_count = tran_range[1] * (refl_range[1] - 1)
-        gui.bottom_bar.progress_bar_set((port_tran * 24 - 1 + port_refl) / pair_count)
+        gui.bottom_bar.progress_bar_set(cnc.pos_index/len(cnc.pos_list))
     except tk.TclError:
         pass
 
