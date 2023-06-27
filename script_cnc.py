@@ -1,26 +1,50 @@
-import cnc
+from cnc import *
 import time
 
+FEED_RATE = 400
 
 def main():
-    cnc_cur.connect('COM3', 115200)
+    cnc_cur = CNCTest()
+    cnc_cur.connect('COM4')
+
+    cnc_cur._send_command('G21') #Change units to mm
+    cnc_cur._send_command(f'F{FEED_RATE}') #Speed mm/min
+
     cnc_cur.set_origin()
 
-    cnc_cur.set_position(20, 20)
+    dist = Point(20, 20).mag
+    sleep = dist/(FEED_RATE/60)
+
+    cnc_cur.set_position(Point(20, 20))
+    time.sleep(sleep)
+
+    """cnc_cur.set_position(Point(-20, 20))
     time.sleep(2)
 
-    cnc_cur.set_position(-20, 20)
+    cnc_cur.set_position(Point(-20, -20))
     time.sleep(2)
 
-    cnc_cur.set_position(-20, -20)
-    time.sleep(2)
+    cnc_cur.set_position(Point(20, -20))
+    time.sleep(2)"""
 
-    cnc_cur.set_position(20, -20)
-    time.sleep(2)
+    print('next')
+    cnc_cur.set_position(Point(0, 0))
+    time.sleep(sleep)
 
-    cnc_cur.set_position(0, 0)
+class CNCTest(CNC):
+    def set_position(self, new_pos: Point):
+        """Attempts to move to a new position."""
+        # wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
+        wa_radius = float('inf')
 
-    cnc_cur.close()
+        if new_pos.mag < wa_radius:
+            try:
+                self._send_command(f'G1 X{new_pos.x} Y{new_pos.y}')
+            except CNCException:
+                raise
+            #time.sleep(2)
+        else:
+            raise CNCException(1)
 
 
 if __name__ == '__main__':

@@ -31,25 +31,17 @@ target_radius = 20
 
 
 class CNC:
+    FEED_RATE = 400  # mm/min
 
     def __init__(self):
         self.ser = None
         self.origin = False
-        self.pos_list = [
-            Point(20, 20),
-            Point(-20, 20),
-            Point(-20, -20),
-            Point(20, -20)
-        ]
+        self.pos_list = []
         self.pos_index = 0
 
     @property
-    def x(self) -> float:
-        return self.pos_list[self.pos_index].x
-
-    @property
-    def y(self) -> float:
-        return self.pos_list[self.pos_index].y
+    def pos(self) -> Point:
+        return self.pos_list[self.pos_index]
 
     def __del__(self):
         if self.ser is not None:
@@ -78,27 +70,33 @@ class CNC:
         try:
             self._send_command('G90')  # Absolute positioning
             self._send_command('G92 X0 Y0')  # Set origin point
+            self._send_command('G21')  # All units in mm
         except CNCException:
             raise
         self.origin = True
 
-    def set_position(self, new_pos: Point):
+    def set_position(self, pos_cur: Point, pos_new: Point) -> None:
         """Attempts to move to a new position."""
         wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
 
-        if new_pos.mag < wa_radius:
+        if pos_new.mag < wa_radius:
             try:
-                self._send_command(f'G0 X{new_pos.x} Y{new_pos.y}')
+                self._send_command(f'G1 F{CNC.FEED_RATE} X{pos_new.x} Y{pos_new.y}')
             except CNCException:
                 raise
-            time.sleep(2)
+            dist = Point(pos_new.x - pos_cur.x, pos_new.y - pos_cur.y).mag
+            time.sleep(dist / (CNC.FEED_RATE / 60))
         else:
             raise CNCException(1)
 
     def next_position(self) -> None:
         try:
+            if self.pos_index == -1:
+                pos_cur = Point(0, 0)
+            else:
+                pos_cur = self.pos_list[self.pos_index-1]
             self.pos_index += 1
-            self.set_position(self.pos_list[self.pos_index])
+            self.set_position(pos_cur, self.pos_list[self.pos_index])
         except CNCException:
             raise
 

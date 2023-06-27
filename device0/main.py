@@ -9,8 +9,20 @@ NI-488.2    ->     https://www.ni.com/en-ca/support/downloads/drivers/download.n
 NI GPIB setup guide:
 https://knowledge.ni.com/KnowledgeArticleDetails?id=kA03q000000x2YDCAY&l=en-CA
 
+
+--- Known bug ---
+VisaIOError: VI_ERROR_INV_OBJECT
+Thrown when:
+    1. Valid hardware is set up
+    2. USB is disconnected
+Thrown by: pyvisa/highlevel.py
+-Not sure how to fix something thrown within the package
+-Not a fatal error either as everything works if USB is
+    connected again
+
 Author: Noah Stieler, 2023
 """
+import math
 import tkinter as tk
 import pyvisa as visa
 import serial.tools.list_ports
@@ -40,33 +52,6 @@ port_refl = refl_range[0]
 vna, switches = None, None
 
 cnc = CNC()
-
-"""
-Bug
-VisaIOError: VI_ERROR_INV_OBJECT 
-Thrown when:
-    1. Valid hardware is set up
-    2. USB is disconnected
-Thrown by: pyvisa/highlevel.py
--Not sure how to fix something thrown within the package
--Not a fatal error either as everything works if USB is
-    connected again 
-"""
-
-# TODO object dimensions
-# TODO point circle, linear spaced
-# TODO pick individual points
-# TODO Origin set
-"""
-
-Check boxes to select object type - circular, rectangular
-
-
-Show origin on gui
-    Red cross when origin is not set
-Show positions on gui
-
-"""
 
 
 def main() -> None:
@@ -171,8 +156,8 @@ def main() -> None:
                 switches.close()
 
                 try:
-                    cnc.set_position(Point(0, 0))
-                    canvas.set_target_pos(cnc.x, cnc.y)
+                    cnc.set_position(cnc.pos, Point(0, 0))
+                    canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
                 except CNCException as e:
                     e.display()
                     abort_scan()
@@ -184,7 +169,7 @@ def main() -> None:
                 # Go to next position
                 try:
                     cnc.next_position()
-                    canvas.set_target_pos(cnc.x, cnc.y)
+                    canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
                 except CNCException as e:
                     e.display()
                     abort_scan()
@@ -193,7 +178,7 @@ def main() -> None:
                 out.mkdir_new_pos()
                 for s_parameter in vna.sp_to_measure:
                     meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                              cnc.x, cnc.y)
+                                                              cnc.pos.x, cnc.pos.y)
                     out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
                 port_tran = tran_range[0]
@@ -247,11 +232,27 @@ def on_button_run() -> None:
 
     vna.initialize()
 
+    """import random
+    li = []
+    wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
+    for i in range(0, 5):
+        angle = random.random()*2*math.pi
+        mag = random.random()*wa_radius
+        p = Point(mag*math.cos(angle), mag*math.sin(angle))
+        li.append(p)
+    cnc.pos_list = li"""
+
+    cnc.pos_list = [
+            Point(40, 40),
+            Point(-40, 40),
+            Point(-40, -40),
+            Point(40, -40)
+        ]
     cnc.init_pos_index()
 
     try:
         cnc.next_position()
-        canvas.set_target_pos(cnc.x, cnc.y)
+        canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
     except CNCException as e:
         e.display()
         return
@@ -262,7 +263,7 @@ def on_button_run() -> None:
 
     for s_parameter in vna.sp_to_measure:
         meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                  cnc.x, cnc.y)
+                                                  cnc.pos.x, cnc.pos.y)
         out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
     """Initialize switches"""
