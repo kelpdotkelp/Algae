@@ -22,7 +22,6 @@ Thrown by: pyvisa/highlevel.py
 
 Author: Noah Stieler, 2023
 """
-import math
 import tkinter as tk
 import pyvisa as visa
 import serial.tools.list_ports
@@ -52,7 +51,6 @@ port_refl = refl_range[0]
 vna, switches = None, None
 
 cnc = CNC()
-
 
 def main() -> None:
     global port_tran, port_refl
@@ -229,25 +227,9 @@ def on_button_run() -> None:
 
     vna.initialize()
 
-    """import random
-    li = []
-    wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
-    for i in range(0, 3):
-        angle = random.random()*2*math.pi
-        mag = random.random()*wa_radius
-        p = Point(mag*math.cos(angle), mag*math.sin(angle))
-        li.append(p)
-    cnc.pos_list = li"""
+    radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
+    cnc.pos_list = rand_uniform(input_dict['num_pos'].value, radius, order='nearest_neighbour')
 
-    """cnc.pos_list = [
-            Point(40, 40),
-            Point(-40, 40),
-            Point(-40, -40),
-            Point(40, -40)
-        ]"""
-    cnc.pos_list = [
-        Point(-40, -40)
-    ]
     cnc.init_pos_index()
 
     try:

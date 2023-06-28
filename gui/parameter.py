@@ -27,6 +27,7 @@ class InputItem:
         tk_text.set(text)
         self.widget.config(text=tk_text)
 
+
 @dataclass
 class InputItemNumber(InputItem):
     value: float

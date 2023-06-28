@@ -156,6 +156,17 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     entry_pad.grid(row=0, column=3, sticky='e', padx=7)
     input_dict['wa_pad'] = InputItemNumber(entry_pad, 'Padding (mm)', 0)
 
+    # Number of positions
+    frame_pos = tk.Frame(frame_pos_box)
+    frame_pos.pack(anchor='w', padx=padx, pady=pady)
+
+    label_pos = tk.Label(frame_pos, text='Number of positions\t')
+    label_pos.grid(row=0, column=0, sticky='w')
+    entry_pos = tk.Entry(frame_pos, justify=tk.RIGHT)
+    entry_pos.grid(row=0, column=1, sticky='e', padx=7)
+    input_dict['num_pos'] = InputItemNumber(entry_pos, 'Number of positions', 0)
+    input_dict['num_pos'].set('0')
+
     # Select target type
     frame_type = tk.Frame(frame_pos_box)
     frame_type.pack(anchor='w', padx=padx, pady=pady)

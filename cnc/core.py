@@ -11,7 +11,7 @@ Author: Noah Stieler, 2023
 import serial
 import time
 from dataclasses import dataclass
-from math import sqrt
+from math import sqrt, pow
 
 import gui.tab_hardware
 from gui.parameter import input_dict
@@ -25,6 +25,9 @@ class Point:
     @property
     def mag(self):
         return sqrt(pow(self.x, 2) + pow(self.y, 2))
+
+    def dist(self, other) -> float:
+        return sqrt(pow(self.x - other.x, 2) + pow(self.y - other.y, 2))
 
 
 target_radius = 20
@@ -41,7 +44,10 @@ class CNC:
 
     @property
     def pos(self) -> Point:
-        return self.pos_list[self.pos_index]
+        if self.pos_index < 0:
+            return Point(0, 0)
+        else:
+            return self.pos_list[self.pos_index]
 
     def __del__(self):
         if self.ser is not None:
@@ -90,11 +96,14 @@ class CNC:
             raise CNCException(1)
 
     def next_position(self) -> None:
+        if len(self.pos_list) == 0:
+            return
+
         try:
             if self.pos_index == -1:
                 pos_cur = Point(0, 0)
             else:
-                pos_cur = self.pos_list[self.pos_index-1]
+                pos_cur = self.pos_list[self.pos_index - 1]
             self.pos_index += 1
             self.set_position(pos_cur, self.pos_list[self.pos_index])
         except CNCException:

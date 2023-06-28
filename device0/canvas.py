@@ -10,11 +10,11 @@ Author: Noah Stieler, 2023
 """
 
 import gui
-from gui.parameter import input_dict
 import math
 
 from .imaging import Switches
 import cnc.core
+from cnc import *
 
 _init = False
 

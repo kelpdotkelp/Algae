@@ -42,6 +42,8 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
     elif not (1 <= input_dict['wa_pad'].value < float('inf')):
         gui.bottom_bar.message_display('Invalid padding.', 'red')
         return False
+    elif not (0 <= input_dict['num_pos'].value < 512):
+        gui.bottom_bar.message_display('Invalid number of positions.', 'red')
     elif gui.tab_hardware.target_selected == 'circular' and (not 0 < input_dict['target_radius'].value < float('inf')):
         gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
         return False
