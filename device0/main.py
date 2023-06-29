@@ -22,6 +22,9 @@ Thrown by: pyvisa/highlevel.py
 
 Author: Noah Stieler, 2023
 """
+
+# TODO redesign CNC so that cnc = None if no connection
+
 import tkinter as tk
 import pyvisa as visa
 import serial.tools.list_ports
@@ -51,6 +54,7 @@ port_refl = refl_range[0]
 vna, switches = None, None
 
 cnc = CNC()
+
 
 def main() -> None:
     global port_tran, port_refl
@@ -309,7 +313,7 @@ def on_button_connect() -> None:
 
 def update_progress_bar() -> None:
     try:
-        gui.bottom_bar.progress_bar_set(cnc.pos_index/len(cnc.pos_list))
+        gui.bottom_bar.progress_bar_set(cnc.pos_index / len(cnc.pos_list))
     except tk.TclError:
         pass
 

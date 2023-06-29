@@ -82,16 +82,29 @@ class CNC:
         self.origin = True
 
     def set_position(self, pos_cur: Point, pos_new: Point) -> None:
-        """Attempts to move to a new position."""
+        """Attempts to move to a new position. Delays are put in place to ensure
+        VNA does not fire while there is still movement."""
         wa_radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
 
         if pos_new.mag < wa_radius:
             try:
+                time.sleep(0.5)
                 self._send_command(f'G1 F{CNC.FEED_RATE} X{pos_new.x} Y{pos_new.y}')
+
+                # Wait until movement has been completed.
+                idle_state = False
+                while not idle_state:
+                    out = self._send_command('?')  # Query status
+                    for string in out:
+                        if string[0] == '<':
+
+                            end = string.find('|')
+                            if string[1:end] == 'Idle':
+                                idle_state = True
+
+                time.sleep(1)
             except CNCException:
                 raise
-            dist = Point(pos_new.x - pos_cur.x, pos_new.y - pos_cur.y).mag
-            time.sleep(dist / (CNC.FEED_RATE / 60))
         else:
             raise CNCException(1)
 
@@ -112,16 +125,19 @@ class CNC:
     def init_pos_index(self) -> None:
         self.pos_index = -1
 
-    def _send_command(self, cmd: str) -> None:
+    def _send_command(self, cmd: str) -> list:
         self.ser.write((cmd + '\n').encode('utf-8'))
         out = self.ser.readlines()
 
         for i in range(len(out)):
-            out[i].decode()
-            out[i] = out[i][:-2]
+            out[i] = out[i].decode('utf-8')
+            out[i] = out[i][:-2]  # Remove \r\n
 
-            if out[i] != b'ok':
+            # Status command begins with a '<'
+            if not (out[i] == 'ok' or out[i][0] == '<'):
                 raise CNCException(0, cmd)
+
+        return out
 
 
 class CNCException(Exception):
