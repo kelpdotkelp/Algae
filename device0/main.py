@@ -23,7 +23,12 @@ Thrown by: pyvisa/highlevel.py
 Author: Noah Stieler, 2023
 """
 
-# TODO redesign CNC so that cnc = None if no connection
+# TODO remove unused close() methods
+# TODO switches, vna, use VISA in their classes.
+
+# TODO s params dont work - Seems to generate files okay?
+# TODO check CNC is in bounds while moving
+# TODO No CNC doesnt work
 
 import tkinter as tk
 import pyvisa as visa
@@ -51,9 +56,7 @@ refl_range = (Switches.PORT_MIN, Switches.PORT_MAX)
 port_tran = tran_range[0]
 port_refl = refl_range[0]
 
-vna, switches = None, None
-
-cnc = CNC()
+vna, switches, cnc = None, None, None
 
 
 def main() -> None:
@@ -217,7 +220,7 @@ def on_button_run() -> None:
     Assuming no user errors, state is changed to 'scan'."""
 
     """Check that hardware is connected and ready."""
-    if vna is None or switches is None or cnc.ser is None:
+    if vna is None or switches is None or cnc is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
 
@@ -301,9 +304,8 @@ def on_button_connect() -> None:
         gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
 
     global cnc
-    cnc = CNC()
-    success = cnc.connect(input_dict['address_serial'].value)
-    if success:
+    cnc = create_cnc(input_dict['address_serial'].value)
+    if cnc is not None:
         gui.tab_hardware.set_indicator(2, 'Connected.', 'green')
         button_dict['set_origin'].set_state(1)
     else:

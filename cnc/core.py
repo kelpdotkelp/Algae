@@ -36,11 +36,13 @@ target_radius = 20
 class CNC:
     FEED_RATE = 400  # mm/min
 
-    def __init__(self):
+    def __init__(self, address):
         self.ser = None
         self.origin = False
         self.pos_list = []
         self.pos_index = 0
+
+        self._connect(address)
 
     @property
     def pos(self) -> Point:
@@ -53,7 +55,7 @@ class CNC:
         if self.ser is not None:
             self.ser.close()
 
-    def connect(self, port: str, baud_rate: int = 115200, timeout: float = 1) -> bool:
+    def _connect(self, port: str, baud_rate: int = 115200, timeout: float = 1) -> None:
         if self.ser is not None:
             self.ser.close()
 
@@ -64,12 +66,8 @@ class CNC:
             self.ser.write('\r\n\r\n'.encode('utf-8'))
             time.sleep(2)
             self.ser.flushInput()
-
-            return True
         except serial.serialutil.SerialException as e:
             self.ser = None
-
-            return False
 
     def set_origin(self) -> None:
         """Sets the origin at the targets current position."""
@@ -138,6 +136,14 @@ class CNC:
                 raise CNCException(0, cmd)
 
         return out
+
+
+def create_cnc(address: str) -> CNC:
+    new_cnc = CNC(address)
+    if new_cnc.ser is not None:
+        return new_cnc
+    else:
+        return None
 
 
 class CNCException(Exception):
