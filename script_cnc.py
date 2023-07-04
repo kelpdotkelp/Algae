@@ -5,8 +5,7 @@ FEED_RATE = 100
 
 
 def main():
-    cnc_cur = CNCTest()
-    cnc_cur.connect('COM4')
+    cnc_cur = CNCTest('COM4')
 
     cnc_cur._send_command('G21')  # Change units to mm
     cnc_cur._send_command(f'F{FEED_RATE}')  # Speed mm/min
@@ -24,6 +23,16 @@ def main():
 
         for str in out:
             if str[0] == '<':
+                end = str.find('|')
+
+                print(str)
+                if str[1:end] == 'Run':
+                    x = str[str.find(':') + 1: str.find(',')]
+                    y = str[str.find(',') + 1: str.find(',', str.find(',') + 1)]
+                    print(f'({x}, {y})')
+                    if float(x) > 10:
+                        cnc_cur._send_command('!') # Feed stop
+                        break;
 
                 end = str.find('|')
                 if str[1:end] == 'Idle':

@@ -95,8 +95,17 @@ class CNC:
                     out = self._send_command('?')  # Query status
                     for string in out:
                         if string[0] == '<':
-
                             end = string.find('|')
+
+                            # Check while moving the CNC that it is in bounds
+                            if string[1:end] == 'Run':
+                                query_x = string[string.find(':') + 1: string.find(',')]
+                                query_y = string[string.find(',') + 1: string.find(',', string.find(',') + 1)]
+                                moving_pos = Point(float(query_x), float(query_y))
+                                if moving_pos.mag > wa_radius:
+                                    self._send_command('!')  # Feed stop
+                                    raise CNCException(1)
+
                             if string[1:end] == 'Idle':
                                 idle_state = True
 
@@ -159,6 +168,9 @@ class CNCException(Exception):
 
 
 def update_target_dim():
+    """This is used to calculate the radius of the target.
+    In the future, if the target is not circular, this function will
+    calculate the minimum bounding disk around it."""
     global target_radius
     if gui.tab_hardware.target_selected == 'circular':
         if 0 < input_dict['target_radius'].value <= float('inf'):

@@ -157,6 +157,7 @@ def main() -> None:
                 except CNCException as e:
                     e.display()
                     abort_scan()
+                    return
 
                 button_dict['stop'].toggle_state()
 
@@ -169,6 +170,7 @@ def main() -> None:
                 except CNCException as e:
                     e.display()
                     abort_scan()
+                    return
 
                 # Set up new output folder
                 out.mkdir_new_pos()
@@ -217,8 +219,6 @@ def on_button_run() -> None:
     if vna is None or switches is None or cnc is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
-
-    # TODO send check resources are still connected - *IDN?, serial
 
     valid = input_validate(vna, cnc)
     if not valid:
