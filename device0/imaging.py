@@ -15,16 +15,17 @@ Author: Noah Stieler, 2023
 """
 
 import time
-import pyvisa as visa
 
+from visa import VisaResource
 from gui.parameter import input_dict
 
 
-class VNA:
+class VNA(VisaResource):
     s_params = ['S11', 'S21', 'S12', 'S22']
 
-    def __init__(self, resource: visa.Resource):
-        self.resource = resource
+    def __init__(self, address: str):
+        super().__init__(address)
+
         self.name = ""
 
         self.sp_to_measure = []
@@ -41,22 +42,13 @@ class VNA:
         return li
 
     def __del__(self):
-        if self.resource is None:
-            return
-
-        try:
-            self.write('*RST')
-            self.resource.close()
-        except visa.errors.VisaIOError:
-            pass
-        except visa.errors.InvalidSession:
-            pass
+        super().__del__()
 
     def initialize(self) -> None:
         self.resource.read_termination = '\n'
         self.resource.write_termination = '\n'
 
-        self.name = self.resource.query('*IDN?')
+        self.name = self.query('*IDN?')
 
         self.write('SYSTEM:FPRESET')
 
@@ -97,12 +89,6 @@ class VNA:
             self.write('DISPLAY:VISIBLE ON')
         else:
             self.write('DISPLAY:VISIBLE OFF')
-
-    def write(self, cmd: str) -> None:
-        self.resource.write(cmd)
-
-    def query(self, cmd: str) -> str:
-        return self.resource.query(cmd)
 
     def fire(self) -> dict:
         """Trigger the VNA and return the data it collected."""
@@ -157,7 +143,7 @@ class VNA:
         )
 
 
-class Switches:
+class Switches(VisaResource):
     """Commands must be terminated with a semicolon
     Previous software said that trans must be set before refl but
     both orders worked in my tests"""
@@ -166,19 +152,11 @@ class Switches:
 
     debounce_time = 0.03  # seconds
 
-    def __init__(self, resource: visa.Resource):
-        self.resource = resource
+    def __init__(self, address: str):
+        super().__init__(address)
 
     def __del__(self):
-        if self.resource is None:
-            return
-
-        try:
-            self.resource.close()
-        except visa.errors.VisaIOError:
-            pass
-        except visa.errors.InvalidSession:
-            pass
+        super().__del__()
 
     def initialize(self) -> None:
         self.write('*rst')  # reset
@@ -199,9 +177,6 @@ class Switches:
         self.write(f'refl_{Switches.pad_port_number(port)}')
         time.sleep(Switches.debounce_time)
 
-    def write(self, cmd: str) -> None:
-        self.resource.write(cmd)
-
     @staticmethod
     def pad_port_number(port: int) -> str:
         """If the port is less than 9, it must be padded with a
@@ -210,6 +185,22 @@ class Switches:
             return '0' + str(port)
         else:
             return str(port)
+
+
+def create_vna(address: str) -> VNA:
+    new_vna = VNA(address)
+    if new_vna.resource is not None:
+        return new_vna
+    else:
+        return None
+
+
+def create_switches(address: str) -> VNA:
+    new_switches = Switches(address)
+    if new_switches.resource is not None:
+        return new_switches
+    else:
+        return None
 
 
 class SwitchInvalidPortException(Exception):

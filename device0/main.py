@@ -23,12 +23,9 @@ Thrown by: pyvisa/highlevel.py
 Author: Noah Stieler, 2023
 """
 
-# TODO remove unused close() methods
-# TODO switches, vna, use VISA in their classes.
 # TODO check CNC is in bounds while moving
 
 import tkinter as tk
-import pyvisa as visa
 import serial.tools.list_ports
 
 import gui
@@ -40,7 +37,7 @@ from display_resources import display_resources
 
 from . import data_handler
 from . import canvas
-from .imaging import VNA, Switches
+from .imaging import *
 from .input_validate import input_validate
 
 WORKING_AREA_RADIUS = 120
@@ -280,34 +277,29 @@ def abort_scan() -> None:
 def on_button_connect() -> None:
     """Opens the vna and switches resources and checks there is a valid
     connection with them."""
-    visa_resource_manager = visa.ResourceManager()
-    r_list = visa_resource_manager.list_resources()
-    global vna, switches
+    global vna, switches, cnc
+    valid = [False, False, False]
 
-    if input_dict['address_vna'].value in r_list:
-        visa_vna = visa_resource_manager.open_resource(input_dict['address_vna'].value)
-        vna = VNA(visa_vna)
-        gui.tab_hardware.set_indicator(0, 'Connected.', 'green')
-    else:
-        vna = None
-        gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
+    vna = create_vna(input_dict['address_vna'].value)
+    if vna is not None:
+        valid[0] = True
 
-    if input_dict['address_switch'].value in r_list:
-        visa_switches = visa_resource_manager.open_resource(input_dict['address_switch'].value)
-        switches = Switches(visa_switches)
-        gui.tab_hardware.set_indicator(1, 'Connected.', 'green')
-    else:
-        switches = None
-        gui.tab_hardware.set_indicator(1, 'Resource not found.', 'red')
+    switches = create_switches(input_dict['address_switch'].value)
+    if switches is not None:
+        valid[1] = True
 
-    global cnc
     cnc = create_cnc(input_dict['address_serial'].value)
     if cnc is not None:
-        gui.tab_hardware.set_indicator(2, 'Connected.', 'green')
+        valid[2] = True
         button_dict['set_origin'].set_state(1)
     else:
-        gui.tab_hardware.set_indicator(2, 'Resource not found.', 'red')
         button_dict['set_origin'].set_state(0)
+
+    for i in range(len(valid)):
+        if valid[i]:
+            gui.tab_hardware.set_indicator(i, 'Connected.', 'green')
+        else:
+            gui.tab_hardware.set_indicator(i, 'Resource not found.', 'red')
 
 
 def update_progress_bar() -> None:
