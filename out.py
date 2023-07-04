@@ -60,8 +60,11 @@ def create_meta_file(meta: dict) -> None:
     file.close()
 
 
-def mkdir_new_pos() -> None:
+def mkdir_new_pos(first_position:bool = False) -> None:
     """Creates new directory in the root for a position."""
+    if first_position:
+        output['pos_index'] = 0
+
     output['dir_cur'] = output['full_path'] + '\\pos' + str(output['pos_index'])
     os.mkdir(output['dir_cur'])
     output['pos_index'] += 1

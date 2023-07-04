@@ -25,10 +25,7 @@ Author: Noah Stieler, 2023
 
 # TODO remove unused close() methods
 # TODO switches, vna, use VISA in their classes.
-
-# TODO s params dont work - Seems to generate files okay?
 # TODO check CNC is in bounds while moving
-# TODO No CNC doesnt work
 
 import tkinter as tk
 import pyvisa as visa
@@ -248,7 +245,7 @@ def on_button_run() -> None:
 
     """Initialize output file structure"""
     out.init_root(input_dict['output_dir'].value, input_dict['output_name'].value)
-    out.mkdir_new_pos()
+    out.mkdir_new_pos(first_position=True)
 
     for s_parameter in vna.sp_to_measure:
         meta_dict = data_handler.format_meta_data(vna, s_parameter,
@@ -314,6 +311,9 @@ def on_button_connect() -> None:
 
 
 def update_progress_bar() -> None:
+    if len(cnc.pos_list) == 0:
+        return
+
     try:
         gui.bottom_bar.progress_bar_set(cnc.pos_index / len(cnc.pos_list))
     except tk.TclError:

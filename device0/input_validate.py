@@ -27,7 +27,7 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
     if not (input_dict['freq_stop'].value > input_dict['freq_start'].value):
         gui.bottom_bar.message_display('Start frequency must be less than stop frequency.', 'red')
         return False
-    elif not len(vna.sp_to_measure) >= 1:
+    elif not _valid_s_params():
         gui.bottom_bar.message_display('Select at least one S parameter.', 'red')
         return False
     elif not os.path.isdir(input_dict['output_dir'].value):
@@ -49,3 +49,11 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
         return False
 
     return True
+
+
+def _valid_s_params() -> bool:
+    """Returns true if at least one S parameter has been selected."""
+    for s_param in VNA.s_params:
+        if s_param in input_dict and input_dict[s_param].value == 1:
+            return True
+    return False

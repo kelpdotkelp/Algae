@@ -28,12 +28,8 @@ class VNA:
         self.name = ""
 
         self.sp_to_measure = []
-        for s_param in VNA.s_params:
-            if s_param in input_dict:
-                if input_dict[s_param].value == 1:
-                    self.sp_to_measure.append(s_param)
-
         self.p_ranges = {}
+
         self._set_parameter_ranges()
 
     @property
@@ -93,6 +89,11 @@ class VNA:
         # Kind of arbitrary, chosen like this to ensure plenty of time to complete sweep
         # Extra important if data_point_count is large.
         self.resource.timeout = 100 * 1000  # time in milliseconds
+
+        for s_param in VNA.s_params:
+            if s_param in input_dict:
+                if input_dict[s_param].value == 1:
+                    self.sp_to_measure.append(s_param)
 
     def display_on(self, setting: bool) -> None:
         """Old software said VNA runs faster with display off,
