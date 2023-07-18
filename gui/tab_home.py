@@ -14,12 +14,11 @@ defined by default.
 Author: Noah Stieler, 2023
 """
 
-import tkinter as tk
-import types
 from tkinter import filedialog
-import tkinter.ttk as ttk
 
 from . import parameter
+from . import style
+from .widgets import *
 from .button import *
 
 canvas = None
@@ -35,17 +34,14 @@ _new_frame = None
 
 def add_parameter_num(display_name: str) -> parameter.InputItemNumber:
     global _parameter_row_count
-    padding_x = 15
-    padding_y = 10
-
     _frame_parameter_box.rowconfigure(index=_parameter_row_count, weight=1)
 
     new_frame = tk.Frame(_frame_parameter_box)
-    new_frame.grid(row=_parameter_row_count, column=0, pady=padding_y, sticky='nsew')
+    new_frame.grid(row=_parameter_row_count, column=0, pady=pady_content, sticky='nsew')
 
-    tk.Label(new_frame, text=display_name).pack(padx=padding_x, side=tk.LEFT)
+    tk.Label(new_frame, text=display_name).pack(padx=padx_content, side=tk.LEFT)
     entry = tk.Entry(new_frame, justify=tk.RIGHT)
-    entry.pack(padx=padding_x, side=tk.RIGHT)
+    entry.pack(padx=padx_content, side=tk.RIGHT)
 
     _parameter_row_count += 1
 
@@ -94,80 +90,42 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     frame_page_base.rowconfigure(index=0, weight=1)
     frame_page_base.columnconfigure(index=0, weight=3)
     frame_page_base.columnconfigure(index=1, weight=4)
-    frame_input.grid(row=0, column=0, sticky='nsew')
+    frame_input.grid(row=0, column=0, padx=50, pady=(pady_section_top, pady_content), sticky='nsew')
     frame_display.grid(row=0, column=1, sticky='nsew')
 
     # Add to frame_input
     frame_input.pack_propagate(False)
 
-    #       Create widgets
-    label_parameter = tk.Label(frame_input, text='Parameters',
-                               background=frame_input['background'],
-                               font=('Arial', 12))
+    insert_section(frame_input, 'Parameters')
+
     global _frame_parameter_box
     _frame_parameter_box = tk.Frame(frame_input, width=400, height=300,
                                     borderwidth=3, relief=tk.SUNKEN)
-    label_output = tk.Label(frame_input, text='Output',
-                            background=frame_input['background'],
-                            font=('Arial', 12))
-    frame_output_box = tk.Frame(frame_input, width=_frame_parameter_box['width'] - 30, height=85,
-                                borderwidth=3, relief=tk.SUNKEN)
-
-    #       Add to frame
-    label_parameter.pack(padx=50, pady=(60, 10), anchor='w')
-    _frame_parameter_box.pack(padx=50, anchor='w', fill=tk.X)
-    label_output.pack(padx=50, pady=(25, 10), anchor='w')
-    frame_output_box.pack(padx=50, anchor='w', fill=tk.X)
-
-    """PARAMETERS"""
     _frame_parameter_box.grid_propagate(True)
     _frame_parameter_box.columnconfigure(index=0, weight=1)
+    _frame_parameter_box.pack(anchor='w', fill=tk.X)
 
-    """OUTPUT"""
-    frame_output_box.grid_propagate(True)
-    frame_output_box.rowconfigure(index=1, weight=1)
-    frame_output_box.columnconfigure(index=0, weight=1)
+    insert_section(frame_input, 'Output')
+
+    frame_output_box = tk.Frame(frame_input, borderwidth=3, relief=tk.SUNKEN)
+    frame_output_box.pack(anchor='w')
 
     # Output directory path
-    display_name = 'Output directory path'
-    label_odp = tk.Label(frame_output_box, text=display_name)
-    label_odp.grid(row=0, column=0, padx=15, pady=5, sticky='w')
-
-    frame_path = tk.Frame(frame_output_box)
-    frame_path.grid_propagate(True)
-    frame_path.grid(row=1, column=0, padx=15, pady=5, sticky='ew')
-    frame_path.columnconfigure(index=0, weight=1)
-    frame_path.rowconfigure(index=0, weight=1)
-
-    entry_file_path = tk.Entry(frame_path)
-    entry_file_path.grid(row=0, column=0, sticky='ew')
+    widgets = insert_file_dialog(frame_output_box, 'Output directory path')
     parameter.input_dict['output_dir'] = \
-        parameter.InputItemString(entry_file_path, display_name)
-
-    button_fe = ttk.Button(frame_path, text='. . .', width=5)
-    button_fe.configure(command=_on_file_press)
-    button_fe.grid(row=0, column=1)
-    button_dict['file_exp'] = ButtonItem(button_fe)
+        parameter.InputItemString(widgets['entry'], 'Output directory path')
+    button_dict['file_exp'] = ButtonItem(widgets['button'])
+    button_dict['file_exp'].command(_on_file_press)
 
     # Name
-    display_name = 'Name'
-    label_name = tk.Label(frame_output_box, text=display_name)
-    label_name.grid(row=2, column=0, padx=15, pady=5, sticky='w')
-
-    entry_name = tk.Entry(frame_output_box)
-    entry_name.grid(row=3, column=0, padx=15, pady=5, sticky='ew')
+    widgets = insert_labeled_entry_long(frame_output_box, 'Name')
     parameter.input_dict['output_name'] = \
-        parameter.InputItemString(entry_name, display_name)
+        parameter.InputItemString(widgets['entry'], 'Name')
 
     # Description
-    display_name = 'Description'
-    label_desc = tk.Label(frame_output_box, text=display_name)
-    label_desc.grid(row=4, column=0, padx=15, pady=5, sticky='w')
-
-    entry_desc = tk.Entry(frame_output_box)
-    entry_desc.grid(row=5, column=0, padx=15, pady=5, sticky='ew')
+    widgets = insert_labeled_entry_long(frame_output_box, 'Description')
     parameter.input_dict['description'] = \
-        parameter.InputItemString(entry_desc, display_name)
+        parameter.InputItemString(widgets['entry'], 'Description')
 
     """CANVAS"""
     frame_display.pack_propagate(False)

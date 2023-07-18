@@ -23,7 +23,7 @@ Thrown by: pyvisa/highlevel.py
 Author: Noah Stieler, 2023
 """
 
-# TODO check CNC is in bounds while moving
+# TODO crash when collecting incident and then running again
 
 import tkinter as tk
 import serial.tools.list_ports

@@ -28,6 +28,7 @@ class InputItem:
         self.widget.config(text=tk_text)
 
 
+
 @dataclass
 class InputItemNumber(InputItem):
     value: float
