@@ -42,11 +42,28 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
     elif not (1 <= input_dict['wa_pad'].value < float('inf')):
         gui.bottom_bar.message_display('Invalid padding.', 'red')
         return False
-    elif not (0 <= input_dict['num_pos'].value < 512):
-        gui.bottom_bar.message_display('Invalid number of positions.', 'red')
-    elif gui.tab_hardware.target_selected == 'circular' and (not 0 < input_dict['target_radius'].value < float('inf')):
-        gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
+
+    if input_dict['target_type'].value == 'circular':
+        if not 0 < input_dict['target_radius'].value < float('inf'):
+            gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
         return False
+    if input_dict['target_type'].value == 'rectangular':
+        pass
+        # TODO error checking on rectangular target type
+
+    if input_dict['pos_gen_type'].value == 'random uniform':
+        if not (0 <= input_dict['num_pos'].value < 512):
+            gui.bottom_bar.message_display('Invalid number of positions.', 'red')
+            return False
+    if input_dict['pos_gen_type'].value == 'list':
+        path = input_dict['pos_list_path'].value
+        if not os.path.isfile(path):
+            gui.bottom_bar.message_display('Position list file was not found.', 'red')
+            return False
+        ex_start = path.rfind('.')
+        if not path[ex_start:len(path)] == '.csv':
+            gui.bottom_bar.message_display('Position list file only supports .csv', 'red')
+            return False
 
     return True
 

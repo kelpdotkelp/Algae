@@ -172,7 +172,7 @@ def update_target_dim():
     In the future, if the target is not circular, this function will
     calculate the minimum bounding disk around it."""
     global target_radius
-    if gui.tab_hardware.target_selected == 'circular':
+    if input_dict['target_type'].value == 'circular':
         if 0 < input_dict['target_radius'].value <= float('inf'):
             target_radius = input_dict['target_radius'].value
         else:

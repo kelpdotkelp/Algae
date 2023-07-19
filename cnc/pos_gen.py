@@ -22,7 +22,7 @@ def rand_uniform(n_points: int, radius: float, order='none') -> list:
     while len(li) < n_points and iter_count < 8000:
         iter_count += 1
         angle = random.random() * 2 * pi
-        mag = (radius/sqrt(radius)) * sqrt(radius * random.random())  # sqrt() is need to make distribution uniform
+        mag = (radius / sqrt(radius)) * sqrt(radius * random.random())  # sqrt() is need to make distribution uniform
         new_pos = Point(mag * cos(angle), mag * sin(angle))
         skip = False
         for i in range(len(li)):
@@ -59,3 +59,9 @@ def _get_nearest_neighbour(pos_list: list, pos: Point) -> int:
             best_dist = dist
 
     return nn
+
+
+def get_pos_from_file() -> list:
+    """Parses a .csv file and returns a list of positions."""
+    pass
+    # TODO

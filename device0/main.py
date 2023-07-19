@@ -24,6 +24,7 @@ Author: Noah Stieler, 2023
 """
 
 # TODO crash when collecting incident and then running again
+# TODO check box for incident field scan
 
 import tkinter as tk
 import serial.tools.list_ports
@@ -229,7 +230,10 @@ def on_button_run() -> None:
     vna.initialize()
 
     radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
-    cnc.pos_list = rand_uniform(input_dict['num_pos'].value, radius, order='nearest_neighbour')
+    if input_dict['pos_gen_type'].value == 'random uniform':
+        cnc.pos_list = rand_uniform(input_dict['num_pos'].value, radius, order='nearest_neighbour')
+    elif input_dict['pos_gen_type'].value == 'list':
+        cnc.pos_list = get_pos_from_file()
 
     cnc.init_pos_index()
 

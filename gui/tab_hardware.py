@@ -7,15 +7,14 @@ Sets up and handles the hardware tab.
 
 Author: Noah Stieler, 2023
 """
+from tkinter import filedialog
+
 from .parameter import *
 from .button import *
 from .widgets import *
 from . import style
 
-target_selected = 'circular'
 target_types = ('Circular', 'Rectangular')
-
-position_gen_selected = 'random uniform'
 position_gen_types = ('Random uniform', 'List')
 
 _frame_hardware_box = None
@@ -142,6 +141,7 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
 
     """TARGET TYPE"""
     insert_sub_header(frame_pos_box, 'Target type', target_types, _optionmenu_target_type)
+    input_dict['target_type'] = InputItemOptionMenu(None, 'Target type', '')
 
     global _frame_target_type_base
     _frame_target_type_base = tk.Frame(frame_pos_box)
@@ -162,6 +162,7 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
 
     """POSITION GENERATION"""
     insert_sub_header(frame_pos_box, 'Position type', position_gen_types, _optionmenu_position_type)
+    input_dict['pos_gen_type'] = InputItemOptionMenu(None, 'Position type', '')
 
     global _frame_position_gen_base
     _frame_position_gen_base = tk.Frame(frame_pos_box)
@@ -176,31 +177,37 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     global _frame_list
     widgets = insert_file_dialog(_frame_position_gen_base, 'Position list')
     _frame_list = widgets['frame_base']
-    # TODO handle entry and button
+    button_dict['fd_pos_list'] = ButtonItem(widgets['button'])
+    button_dict['fd_pos_list'].command(_open_file_dialog_pos_list)
+    input_dict['pos_list_path'] = InputItemString(widgets['entry'], 'Position list', '')
 
     _optionmenu_position_type('random uniform')
 
+
 def _optionmenu_target_type(*args) -> None:
     """Args is a tuple containing the selected option at index 0."""
-    global target_selected
-    target_selected = args[0].lower()
+    input_dict['target_type'].value = args[0].lower()
 
-    if target_selected == 'circular':
+    if input_dict['target_type'].value == 'circular':
         _frame_rect.pack_forget()
         _frame_circ.pack(anchor='w', padx=padx_content, pady=pady_content)
-    elif target_selected == 'rectangular':
+    elif input_dict['target_type'].value == 'rectangular':
         _frame_circ.pack_forget()
         _frame_rect.pack(anchor='w', padx=pady_content, pady=pady_content)
 
 
 def _optionmenu_position_type(*args) -> None:
     """Args is a tuple containing the selected option at index 0."""
-    global position_gen_selected
-    position_gen_selected = args[0].lower()
+    input_dict['pos_gen_type'].value = args[0].lower()
 
-    if position_gen_selected == 'random uniform':
+    if input_dict['pos_gen_type'].value == 'random uniform':
         _frame_list.pack_forget()
         _frame_rand.pack(anchor='w', padx=padx_content, pady=pady_content)
-    elif position_gen_selected == 'list':
+    elif input_dict['pos_gen_type'].value == 'list':
         _frame_rand.pack_forget()
         _frame_list.pack(anchor='w', padx=padx_content, pady=pady_content)
+
+
+def _open_file_dialog_pos_list() -> None:
+    pos_list_dir = filedialog.askopenfilename()
+    input_dict['pos_list_path'].set(pos_list_dir)

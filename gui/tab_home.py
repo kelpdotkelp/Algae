@@ -17,7 +17,6 @@ Author: Noah Stieler, 2023
 from tkinter import filedialog
 
 from . import parameter
-from . import style
 from .widgets import *
 from .button import *
 

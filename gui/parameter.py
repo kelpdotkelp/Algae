@@ -28,7 +28,6 @@ class InputItem:
         self.widget.config(text=tk_text)
 
 
-
 @dataclass
 class InputItemNumber(InputItem):
     value: float
@@ -55,6 +54,14 @@ class InputItemString(InputItem):
 
     def set(self, text: str) -> None:
         self._entry_set(text)
+
+
+@dataclass
+class InputItemOptionMenu(InputItem):
+    value: str = ''
+
+    def update(self) -> None:
+        pass
 
 
 @dataclass
