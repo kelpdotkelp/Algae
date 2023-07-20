@@ -9,8 +9,7 @@ Author: Noah Stieler, 2023
 import random
 from math import sin, cos, sqrt, pi
 
-from .core import Point
-from gui.parameter import input_dict
+from .point import Point
 
 _MAX_ITER = 8000
 _MIN_DIST = 0.10  # mm

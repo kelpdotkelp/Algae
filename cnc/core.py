@@ -10,25 +10,12 @@ Author: Noah Stieler, 2023
 
 import serial
 import time
-from dataclasses import dataclass
 from math import sqrt, pow
 
 import gui.tab_hardware
 from gui.parameter import input_dict
-
-
-@dataclass
-class Point:
-    x: float
-    y: float
-
-    @property
-    def mag(self):
-        return sqrt(pow(self.x, 2) + pow(self.y, 2))
-
-    def dist(self, other) -> float:
-        return sqrt(pow(self.x - other.x, 2) + pow(self.y - other.y, 2))
-
+from .pos_gen import get_pos_from_file, rand_uniform
+from .point import Point
 
 target_radius = 20
 
@@ -129,8 +116,17 @@ class CNC:
         except CNCException:
             raise
 
-    def init_pos_index(self) -> None:
+    def initialize(self) -> None:
         self.pos_index = -1
+
+        if input_dict['cnc_enable']:
+            radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
+            if input_dict['pos_gen_type'].value == 'random uniform':
+                self.pos_list = rand_uniform(input_dict['num_pos'].value, radius, order='nearest_neighbour')
+            elif input_dict['pos_gen_type'].value == 'list':
+                self.pos_list = get_pos_from_file()
+        else:
+            self.pos_list = []
 
     def _send_command(self, cmd: str) -> list:
         self.ser.write((cmd + '\n').encode('utf-8'))
@@ -179,6 +175,7 @@ def update_target_dim():
     if input_dict['target_type'].value == 'rectangular':
         if 0 < input_dict['target_length'].value < float('inf') \
                 and 0 < input_dict['target_width'].value < float('inf'):
-            target_radius = 0.5*sqrt(pow(input_dict['target_length'].value, 2) + pow(input_dict['target_width'].value, 2))
+            target_radius = 0.5 * sqrt(
+                pow(input_dict['target_length'].value, 2) + pow(input_dict['target_width'].value, 2))
         else:
             target_radius = 0

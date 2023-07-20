@@ -17,11 +17,11 @@ import types
 from .style import *
 
 
-def insert_section(frame_base: tk.Frame, name: str) -> None:
+def insert_section(frame_base: tk.Frame, name: str, pack_side: int = tk.TOP) -> None:
     label_hardware = tk.Label(frame_base, text=name,
                               background=frame_base['background'],
                               font=font_h1)
-    label_hardware.pack(pady=(pady_section_top, pady_content), anchor='w')
+    label_hardware.pack(pady=(pady_section_top, pady_content), anchor='w', side=pack_side)
 
 
 def insert_sub_header(frame_content: tk.Frame, name: str,

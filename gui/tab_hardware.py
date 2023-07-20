@@ -21,6 +21,8 @@ _frame_hardware_box = None
 _status_indicators = []
 _hardware_count = 0
 
+_frame_pos_box = None
+
 # Displays origin set status
 _label_set_origin = None
 
@@ -112,21 +114,34 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
 
 
 def _create_positioning(frame_hardware: tk.Frame) -> None:
-    insert_section(frame_hardware, 'Positioning')
+    frame_pos_header = tk.Frame(frame_hardware)
+    frame_pos_header.pack(anchor='w')
 
-    frame_pos_box = tk.Frame(frame_hardware, width=400, height=300,
+    insert_section(frame_pos_header, 'Positioning', pack_side=tk.LEFT)
+
+    label_enable = tk.Label(frame_pos_header, text='  Enabled: ')
+    label_enable.pack(anchor='w', side=tk.LEFT, pady=(pady_section_top, pady_content))
+
+    checkbox = ttk.Checkbutton(frame_pos_header)
+    checkbox.state(['!alternate'])
+    checkbox.pack(anchor='w', side=tk.LEFT, pady=(pady_section_top, pady_content))
+    input_dict['cnc_enable'] = InputItemBoolean(checkbox, 'enabled', 0)
+    input_dict['cnc_enable'].toggle()
+
+    global _frame_pos_box
+    _frame_pos_box = tk.Frame(frame_hardware, width=400, height=300,
                              borderwidth=3, relief=tk.SUNKEN)
-    frame_pos_box.columnconfigure(index=0, weight=1)
-    frame_pos_box.rowconfigure(index=0, weight=1)
-    frame_pos_box.pack(anchor='w')
+    _frame_pos_box.columnconfigure(index=0, weight=1)
+    _frame_pos_box.rowconfigure(index=0, weight=1)
+    _frame_pos_box.pack(anchor='w')
 
     """SET ORIGIN"""
-    frame_origin = tk.Frame(frame_pos_box)
+    frame_origin = tk.Frame(_frame_pos_box)
     frame_origin.pack(anchor='w', padx=style.padx_content, pady=style.pady_content)
 
     global _label_set_origin
     _label_set_origin = tk.Label(frame_origin, text='',
-                                 background=frame_pos_box['background'])
+                                 background=_frame_pos_box['background'])
     _label_set_origin.grid(row=0, column=1, padx=20)
 
     button_so = ttk.Button(frame_origin, text='Set origin')
@@ -134,17 +149,17 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     button_dict['set_origin'] = ButtonItem(button_so)
 
     """WORKING AREA"""
-    insert_sub_header(frame_pos_box, 'Working area')
-    widgets = insert_labeled_entry(frame_pos_box, ('Radius (mm)', 'Padding (mm)'))
+    insert_sub_header(_frame_pos_box, 'Working area')
+    widgets = insert_labeled_entry(_frame_pos_box, ('Radius (mm)', 'Padding (mm)'))
     input_dict['wa_radius'] = InputItemNumber(widgets['entry'][0], 'Radius (mm)', 0)
     input_dict['wa_pad'] = InputItemNumber(widgets['entry'][1], 'Padding (mm)', 0)
 
     """TARGET TYPE"""
-    insert_sub_header(frame_pos_box, 'Target type', target_types, _optionmenu_target_type)
+    insert_sub_header(_frame_pos_box, 'Target type', target_types, _optionmenu_target_type)
     input_dict['target_type'] = InputItemOptionMenu(None, 'Target type', '')
 
     global _frame_target_type_base
-    _frame_target_type_base = tk.Frame(frame_pos_box)
+    _frame_target_type_base = tk.Frame(_frame_pos_box)
     _frame_target_type_base.pack(anchor='w')
 
     global _frame_circ
@@ -164,11 +179,11 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     _optionmenu_target_type('circular')
 
     """POSITION GENERATION"""
-    insert_sub_header(frame_pos_box, 'Position type', position_gen_types, _optionmenu_position_type)
+    insert_sub_header(_frame_pos_box, 'Position type', position_gen_types, _optionmenu_position_type)
     input_dict['pos_gen_type'] = InputItemOptionMenu(None, 'Position type', '')
 
     global _frame_position_gen_base
-    _frame_position_gen_base = tk.Frame(frame_pos_box)
+    _frame_position_gen_base = tk.Frame(_frame_pos_box)
     _frame_position_gen_base.pack(anchor='w')
 
     global _frame_rand
@@ -185,6 +200,16 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     input_dict['pos_list_path'] = InputItemString(widgets['entry'], 'Position list', '')
 
     _optionmenu_position_type('random uniform')
+
+
+def update_pos_enable() -> None:
+    try:
+        if input_dict['cnc_enable'].value:
+            _frame_pos_box.pack(anchor='w')
+        else:
+            _frame_pos_box.pack_forget()
+    except tk.TclError: # Thrown on window close
+        pass
 
 
 def _optionmenu_target_type(*args) -> None:
