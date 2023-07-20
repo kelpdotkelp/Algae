@@ -24,7 +24,6 @@ Author: Noah Stieler, 2023
 """
 
 # TODO crash when collecting incident and then running again
-# TODO check box for incident field scan
 
 import tkinter as tk
 import serial.tools.list_ports
