@@ -151,12 +151,15 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     widgets = insert_labeled_entry(_frame_target_type_base, ('Radius (mm)',))
     _frame_circ = widgets['frame_base']
     input_dict['target_radius'] = InputItemNumber(widgets['entry'][0], 'Radius (mm)', 0)
+    input_dict['target_radius'].set(0)
 
     global _frame_rect
     widgets = insert_labeled_entry(_frame_target_type_base, ('Length (mm)', 'Width (mm)'))
     _frame_rect = widgets['frame_base']
     input_dict['target_length'] = InputItemNumber(widgets['entry'][0], 'Length (mm)', 0)
+    input_dict['target_length'].set(0)
     input_dict['target_width'] = InputItemNumber(widgets['entry'][1], 'Width (mm)', 0)
+    input_dict['target_width'].set(0)
 
     _optionmenu_target_type('circular')
 

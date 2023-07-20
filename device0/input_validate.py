@@ -46,10 +46,14 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
     if input_dict['target_type'].value == 'circular':
         if not 0 < input_dict['target_radius'].value < float('inf'):
             gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
-        return False
+            return False
     if input_dict['target_type'].value == 'rectangular':
-        pass
-        # TODO error checking on rectangular target type
+        if not 0 < input_dict['target_length'].value < float('inf'):
+            gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
+            return False
+        if not 0 < input_dict['target_width'].value < float('inf'):
+            gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
+            return False
 
     if input_dict['pos_gen_type'].value == 'random uniform':
         if not (0 <= input_dict['num_pos'].value < 512):

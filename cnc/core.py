@@ -168,12 +168,17 @@ class CNCException(Exception):
 
 
 def update_target_dim():
-    """This is used to calculate the radius of the target.
-    In the future, if the target is not circular, this function will
-    calculate the minimum bounding disk around it."""
+    """This is used to calculate the radius of the target. If the
+    target_type is rectangular, then the minimum bounding disk is calculated for it."""
     global target_radius
     if input_dict['target_type'].value == 'circular':
-        if 0 < input_dict['target_radius'].value <= float('inf'):
+        if 0 < input_dict['target_radius'].value < float('inf'):
             target_radius = input_dict['target_radius'].value
+        else:
+            target_radius = 0
+    if input_dict['target_type'].value == 'rectangular':
+        if 0 < input_dict['target_length'].value < float('inf') \
+                and 0 < input_dict['target_width'].value < float('inf'):
+            target_radius = 0.5*sqrt(pow(input_dict['target_length'].value, 2) + pow(input_dict['target_width'].value, 2))
         else:
             target_radius = 0
