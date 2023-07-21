@@ -23,8 +23,6 @@ Thrown by: pyvisa/highlevel.py
 Author: Noah Stieler, 2023
 """
 
-# TODO crash when collecting incident and then running again
-
 import tkinter as tk
 import serial.tools.list_ports
 
@@ -152,8 +150,9 @@ def main() -> None:
 
             if cnc.pos_index + 1 >= len(cnc.pos_list):
                 try:
-                    cnc.set_position(cnc.pos, Point(0, 0))
-                    canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
+                    if input_dict['cnc_enable'].value:
+                        cnc.set_position(cnc.pos, Point(0, 0))
+                        canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
                 except CNCException as e:
                     e.display()
                     abort_scan()

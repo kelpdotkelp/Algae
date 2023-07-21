@@ -77,6 +77,7 @@ class VNA(VisaResource):
         # Extra important if data_point_count is large.
         self.resource.timeout = 100 * 1000  # time in milliseconds
 
+        self.sp_to_measure = []
         for s_param in VNA.s_params:
             if s_param in input_dict:
                 if input_dict[s_param].value == 1:
