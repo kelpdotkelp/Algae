@@ -10,6 +10,7 @@ import random
 from math import sin, cos, sqrt, pi
 
 from .point import Point
+from gui.parameter import input_dict
 
 _MAX_ITER = 8000
 _MIN_DIST = 0.10  # mm
@@ -66,9 +67,7 @@ def get_pos_from_file() -> list:
     """Parses a .csv file and returns a list of positions."""
     out = []
 
-    path = r'C:\Users\Noah\Desktop\test.csv'
-
-    with open(path, 'r') as file:
+    with open(input_dict['pos_list_path'], 'r') as file:
         for line in file:
             line_split = line.split(',')
             if line_split.count('\n') > 0:
