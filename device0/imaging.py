@@ -26,6 +26,9 @@ class VNA(VisaResource):
     def __init__(self, address: str):
         super().__init__(address)
 
+        if self.resource is None:
+            return
+
         self.name = ""
 
         self.sp_to_measure = []
