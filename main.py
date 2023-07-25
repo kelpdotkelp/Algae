@@ -7,7 +7,6 @@ device1 is the 24-port VNA
 
 Author: Noah Stieler, 2023
 """
-# TODO device1 redesign to match device0!!!
 
 import gui
 import device0
