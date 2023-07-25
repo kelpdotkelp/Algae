@@ -12,6 +12,8 @@ from math import sin, cos, sqrt, pi
 from .point import Point
 from gui.parameter import input_dict
 
+DIMENSION = 3
+
 _MAX_ITER = 8000
 _MIN_DIST = 0.10  # mm
 
@@ -66,15 +68,25 @@ def _get_nearest_neighbour(pos_list: list, pos: Point) -> int:
 def get_pos_from_file() -> list:
     """Parses a .csv file and returns a list of positions."""
     out = []
+    num_list = []
 
-    with open(input_dict['pos_list_path'], 'r') as file:
+    with open(input_dict['pos_list_path'].value, 'r') as file:
         for line in file:
+            line = line.replace('\n', '')
             line_split = line.split(',')
-            if line_split.count('\n') > 0:
-                line_split.remove('\n')
-            for i in range(0, len(line_split), 2):
-                line_split[i] = float(line_split[i].replace('\n', ''))
-                line_split[i+1] = float(line_split[i+1].replace('\n', ''))
-                out.append(Point(line_split[i], line_split[i+1]))
+            for item in line_split:
+                if item != '':
+                    num_list.append(item)
+
+    if len(num_list) % DIMENSION != 0:
+        return []
+    if len(num_list) % DIMENSION != 0:
+        return []
+
+    for i in range(0, len(num_list), DIMENSION):
+        if DIMENSION == 2:
+            out.append(Point(num_list[i], num_list[i + 1]))
+        else:
+            out.append(Point(num_list[i], num_list[i + 1], num_list[i + 2]))
 
     return out

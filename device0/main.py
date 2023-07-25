@@ -41,6 +41,8 @@ from .input_validate import input_validate
 WORKING_AREA_RADIUS = 120
 WORKING_AREA_PADDING = 20
 
+pos_gen.DIMENSION = 2
+
 state = 'idle'
 
 tran_range = (Switches.PORT_MIN, Switches.PORT_MAX)

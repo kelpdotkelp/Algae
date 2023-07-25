@@ -60,7 +60,7 @@ class CNC:
         """Sets the origin at the targets current position."""
         try:
             self._send_command('G90')  # Absolute positioning
-            self._send_command('G92 X0 Y0')  # Set origin point
+            self._send_command('G92 X0 Y0 Z0')  # Set origin point
             self._send_command('G21')  # All units in mm
         except CNCException:
             raise
