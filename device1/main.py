@@ -11,26 +11,20 @@ Hardware:
 
 Author: Noah Stieler, 2023
 """
-import threading
-import tkinter as tk
-
-import pyvisa as visa
-
-import gui
 from gui.parameter import input_dict
 from gui.button import button_dict
 import out
 from display_resources import display_resources
 from .data_handler import format_meta_data
 from .gui import calibration
-from .imaging import VNA
+from .imaging import *
 from .input_validate import input_validate
 
 VISA_ADDRESS_VNA = 'TCPIP0::Localhost::hislip0::INSTR'
 
 state = 'idle'
 
-vna = VNA(None)
+vna = None
 
 
 def main() -> None:
@@ -89,23 +83,15 @@ def on_button_run() -> None:
     that all user input is valid. Assuming no errors,
     state is changed to 'scan'."""
 
-    if vna.resource is None:
+    if vna is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
-
-    vna.set_parameter_ranges()
 
     valid = input_validate(vna)
     if not valid:
         return
 
     gui.bottom_bar.message_clear()
-
-    """Initialize vna parameters"""
-    vna.data_point_count = int(input_dict['num_points'].value)
-    vna.if_bandwidth = input_dict['ifbw'].value
-    vna.freq_start = input_dict['freq_start'].value
-    vna.freq_stop = input_dict['freq_stop'].value
 
     vna.initialize()
 
@@ -118,24 +104,18 @@ def on_button_run() -> None:
 def on_button_connect() -> None:
     """Opens the vna resource and checks there is a valid
     connection with it."""
-    visa_resource_manager = visa.ResourceManager()
-    r_list = visa_resource_manager.list_resources()
     global vna
-    visa_vna = None
 
-    if input_dict['address_vna'].value in r_list:
-        visa_vna = visa_resource_manager.open_resource(input_dict['address_vna'].value)
-
+    vna = create_vna(input_dict['address_vna'].value)
+    if vna is not None:
         button_dict['calibrate'].set_state(1)
         gui.tab_hardware.set_indicator(0, 'Resource found.', 'blue')
+
+        vna.set_calibration_list()  # Get calibrations from VNA
+        calibration.cal_list = vna.calibration_list  # Set them in the GUI
     else:
         button_dict['calibrate'].set_state(0)
         gui.tab_hardware.set_indicator(0, 'Resource not found.', 'red')
-    vna = VNA(visa_vna)
-
-    if vna.resource is not None:
-        vna.set_calibration_list()  # Get calibrations from VNA
-        calibration.cal_list = vna.calibration_list  # Set them in the GUI
 
 
 def on_apply_calib() -> None:

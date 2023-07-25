@@ -11,47 +11,38 @@ Hardware:
 
 Author: Noah Stieler, 2023
 """
-import pyvisa
-
 import threading
 import gui
+from visa import VisaResource
+from gui.parameter import input_dict
 
 
-class VNA:
+class VNA(VisaResource):
     PORT_RANGE = (1, 24)
     port_list = ''
 
-    def __init__(self, resource: pyvisa.Resource):
-        self.resource = resource
-        if self.resource is not None:
-            self.resource.timeout = 60 * 1000  # Time in milliseconds
+    def __init__(self, address: str):
+        super().__init__(address)
 
-        self.name = ''
-
-        self.data_point_count = 5
-        self.if_bandwidth = 5 * 100  # Hz
-        self.freq_start = 10000000  # Hz
-        self.freq_stop = 2 * 1000000000  # Hz
-
-        self.data_point_count_range = ()
-        self.if_bandwidth_range = ()
-        self.freq_start_range = ()
-        self.freq_stop_range = ()
-        self.power_range = ()
-
-        self.calibration = ''
-        self.calibration_list = []
-
-        self._trigger_set = False
-
-    def __del__(self):
         if self.resource is None:
             return
-        self.resource.close()
+
+        self.name = ''
+        self.p_ranges = {}
+        self.calibration = ''
+        self.calibration_list = []
+        self._trigger_set = False
+
+        self._set_parameter_ranges()
+
+    def __del__(self):
+        super().__del__()
 
     def initialize(self) -> None:
         """Set up VISA, trigger settings,
         and input parameters."""
+        self.resource.timeout = 60 * 1000  # Time in milliseconds
+
         self.name = self.resource.query('*IDN?')
 
         if self.calibration == '':
@@ -76,25 +67,25 @@ class VNA:
             self._trigger_set = True
 
         # Parameters
-        self.write(f'SENSE1:SWEEP:POINTS {self.data_point_count}')
-        self.write(f'SENSE1:BANDWIDTH {self.if_bandwidth}')
-        self.write(f'SENSE1:FREQUENCY:START {self.freq_start}')
-        self.write(f'SENSE1:FREQUENCY:STOP {self.freq_stop}')
+        self.write('SENSE1:SWEEP:POINTS ' + str(input_dict['num_points'].value))
+        self.write('SENSE1:BANDWIDTH ' + str(input_dict['ifbw'].value))
+        self.write('SENSE1:FREQUENCY:START ' + str(input_dict['freq_start'].value))
+        self.write('SENSE1:FREQUENCY:STOP ' + str(input_dict['freq_stop'].value))
 
-    def set_parameter_ranges(self) -> None:
-        self.data_point_count_range = (
+    def _set_parameter_ranges(self) -> None:
+        self.p_ranges['num_points'] = (
             int(self.query('SENSE1:SWEEP:POINTS? MIN')),
             int(self.query('SENSE1:SWEEP:POINTS? MAX'))
         )
-        self.if_bandwidth_range = (
+        self.p_ranges['ifbw'] = (
             float(self.query('SENSE1:BANDWIDTH? MIN')),
             float(self.query('SENSE1:BANDWIDTH? MAX'))
         )
-        self.freq_start_range = (
+        self.p_ranges['freq_start'] = (
             float(self.query('SENSE1:FREQUENCY:START? MIN')),
             float(self.query('SENSE1:FREQUENCY:START? MAX'))
         )
-        self.freq_stop_range = (
+        self.p_ranges['freq_stop'] = (
             float(self.query('SENSE1:FREQUENCY:STOP? MIN')),
             float(self.query('SENSE1:FREQUENCY:STOP? MAX'))
         )
@@ -127,12 +118,6 @@ class VNA:
 
         self.query('*OPC?')
 
-    def write(self, cmd: str) -> None:
-        self.resource.write(cmd)
-
-    def query(self, cmd: str) -> str:
-        return self.resource.query(cmd)
-
     @staticmethod
     def set_port_list() -> None:
         """Creates comma delimited list of ports,
@@ -142,3 +127,11 @@ class VNA:
             VNA.port_list = VNA.port_list + str(i)
             if not i == 24:
                 VNA.port_list = VNA.port_list + ','
+
+
+def create_vna(address: str) -> VNA:
+    new_vna = VNA(address)
+    if new_vna.resource is not None:
+        return new_vna
+    else:
+        return None

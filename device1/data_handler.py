@@ -10,16 +10,17 @@ Author: Noah Stieler, 2023
 from datetime import date, datetime
 
 from .imaging import VNA
+from gui.parameter import input_dict
 
 
 def format_meta_data(vna: VNA, description: str, posx=0, posy=0) -> dict:
     """Returns the correctly structured dictionary that can later
     be incorporated into JSON format"""
     out_dict = {
-        'freq_start': vna.freq_start,
-        'freq_stop': vna.freq_stop,
-        'if_bandwidth': vna.if_bandwidth,
-        'num_points': vna.data_point_count,
+        'freq_start': input_dict['freq_start'].value,
+        'freq_stop': input_dict['freq_stop'].value,
+        'if_bandwidth': input_dict['ifbw'].value,
+        'num_points': input_dict['num_points'].value,
         'posx': posx,
         'posy': posy,
         'vna_name': vna.name,
