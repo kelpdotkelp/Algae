@@ -121,7 +121,7 @@ class CNC:
 
         if input_dict['cnc_enable']:
             radius = input_dict['wa_radius'].value - input_dict['wa_pad'].value - target_radius
-            if input_dict['pos_gen_type'].value == 'random uniform':
+            if input_dict['pos_gen_type'].value == 'random uniform 2d':
                 self.pos_list = rand_uniform(input_dict['num_pos'].value, radius, order='nearest_neighbour')
             elif input_dict['pos_gen_type'].value == 'list':
                 self.pos_list = get_pos_from_file()

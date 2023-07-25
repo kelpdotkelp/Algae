@@ -15,7 +15,7 @@ from .widgets import *
 from . import style
 
 target_types = ('Circular', 'Rectangular')
-position_gen_types = ('Random uniform', 'List')
+position_gen_types = ('Random uniform 2D', 'List')
 
 _frame_hardware_box = None
 _status_indicators = []
@@ -199,7 +199,7 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     button_dict['fd_pos_list'].command(_open_file_dialog_pos_list)
     input_dict['pos_list_path'] = InputItemString(widgets['entry'], 'Position list', '')
 
-    _optionmenu_position_type('random uniform')
+    _optionmenu_position_type('random uniform 2d')
 
 
 def update_pos_enable() -> None:
@@ -228,7 +228,7 @@ def _optionmenu_position_type(*args) -> None:
     """Args is a tuple containing the selected option at index 0."""
     input_dict['pos_gen_type'].value = args[0].lower()
 
-    if input_dict['pos_gen_type'].value == 'random uniform':
+    if input_dict['pos_gen_type'].value == 'random uniform 2d':
         _frame_list.pack_forget()
         _frame_rand.pack(anchor='w', padx=padx_content, pady=pady_content)
     elif input_dict['pos_gen_type'].value == 'list':

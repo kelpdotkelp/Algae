@@ -59,7 +59,7 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
                 gui.bottom_bar.message_display('Invalid target dimensions.', 'red')
                 return False
 
-        if input_dict['pos_gen_type'].value == 'random uniform':
+        if input_dict['pos_gen_type'].value == 'random uniform 2d':
             if not (0 <= input_dict['num_pos'].value < 512):
                 gui.bottom_bar.message_display('Invalid number of positions.', 'red')
                 return False
