@@ -76,7 +76,7 @@ def get_pos_from_file() -> list:
             line_split = line.split(',')
             for item in line_split:
                 if item != '':
-                    num_list.append(item)
+                    num_list.append(float(item))
 
     if len(num_list) % DIMENSION != 0:
         return []
