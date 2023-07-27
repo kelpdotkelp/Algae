@@ -3,12 +3,12 @@ close all
 clc
 
 WRITE_TO_CSV = true;
-pos_range = [1, 10] %[inclusive, inclusive]
+pos_range = [31, 40] %[inclusive, inclusive]
 
 %Output directory for .csv file
 outputDir = "C:\Users\Noah\Desktop\";
 %Name of .csv file - don't include extension
-outputName = "dielectric_1.5_inch_0.012_step";
+outputName = "dielectric_1.5_inch_" + pos_range(1) + "to" + pos_range(2) + "_0.012_step";
 
 %Antenna Radius (the tip)
 antRad = 12e-2;
@@ -70,7 +70,7 @@ if WRITE_TO_CSV
     pos_list = pos_list * 1000;
 
     for i=pos_range(1):pos_range(2)
-        fprintf(file, pos_list(i,1) + "," + Y(1,2) + "\n");
+        fprintf(file, pos_list(i,1) + "," + pos_list(i,2) + "\n");
     end
 
     fclose(file);
