@@ -1,5 +1,5 @@
 # Algae
-Algae is being designed to provide a user-friendly
+Algae is designed to provide a user-friendly
 graphical application that can be extended to control multiple different electromagnetic imaging experiments. Algae automates
 the process of positioning the imaging target and scanning it in order to collect large datasets.
 
@@ -10,7 +10,6 @@ Uses the following hardware:
 - Agilent E8363B PNA Network Analyzer
 - Agilent 87050A Option K24 Multiport Test Set
 - National Instruments GPIB-USB adapter
-- Custom `grbl` based CNC machine (https://github.com/grbl/grbl)
 
 `device1` - 24-Port VNA (E3-518).
 
@@ -19,6 +18,9 @@ Uses the following hardware:
 - Keysight M9019A PXIe Chassis Gen3
 - Keysight M9037A PXIe High-Performance Embedded Controller
 - Keysight M9802A PXI Vector Network Analyzer, 6 Port (x4)
+
+Both devices use custom `grbl` based cartesian robots.
+(https://github.com/grbl/grbl)
 
 ### Requirements
 
@@ -51,3 +53,15 @@ There should now be a VISA resource set up that PyVISA can
 interface with.
 
 'Network Analyzer' must be running for Algae to send commands to it.
+
+### Building
+
+`build.bat` executes a pyinstaller command to compile Algae into an .exe
+which is at `dist/Algae/Algae.exe`.
+
+If needed, pyinstaller can also be run as a Python module. Run:
+`python -m PyInstaller` followed by all the parameters used in `build.bat`.
+
+### Documentation
+
+Read the wiki for details on working with Algae!
