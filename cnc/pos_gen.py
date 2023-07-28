@@ -3,6 +3,7 @@ Algae ~ Automated Target Positioning System
 Electromagnetic Imaging Lab, University of Manitoba
 
 Generates and performs operations on a list of positions.
+Parses .csv file for a list of points.
 
 Author: Noah Stieler, 2023
 """
@@ -78,8 +79,6 @@ def get_pos_from_file() -> list:
                 if item != '':
                     num_list.append(float(item))
 
-    if len(num_list) % DIMENSION != 0:
-        return []
     if len(num_list) % DIMENSION != 0:
         return []
 
