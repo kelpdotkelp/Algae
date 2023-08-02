@@ -1,0 +1,4 @@
+pyserial==3.5
+PyVISA==1.13.0
+
+pygrbl @ git+https://github.com/kelpdotkelp/pygrbl@master
