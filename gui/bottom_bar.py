@@ -7,7 +7,10 @@ Sets up and handles the bottom task bar.
 
 Author: Noah Stieler, 2023
 """
-from gui.button import *
+import tkinter as tk
+import tkinter.ttk as ttk
+
+from gui.button import button_dict, ButtonItem
 
 enable_button_stop = True
 
