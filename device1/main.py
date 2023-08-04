@@ -19,11 +19,8 @@ from .data_handler import format_meta_data
 from .gui import calibration
 from .imaging import *
 from .input_validate import input_validate
-from cnc import *
 
 VISA_ADDRESS_VNA = 'TCPIP0::Localhost::hislip0::INSTR'
-
-pos_gen.DIMENSION = 2
 
 state = 'idle'
 
