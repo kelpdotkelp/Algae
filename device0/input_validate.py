@@ -12,10 +12,10 @@ import os.path
 import gui
 from gui.parameter import input_dict
 from .imaging import VNA
-from cnc import CNC
+from pygrbl import PyGRBLMachine
 
 
-def input_validate(vna: VNA, cnc: CNC) -> bool:
+def input_validate(vna: VNA, grbl_machine: PyGRBLMachine) -> bool:
     """Checks all user input for errors/invalid entries"""
     check_list = ['num_points', 'ifbw', 'freq_start', 'freq_stop', 'power']
 
@@ -37,7 +37,7 @@ def input_validate(vna: VNA, cnc: CNC) -> bool:
     """     IF POSITIONING IS ENABLED
     """
     if input_dict['cnc_enable'].value:
-        if not cnc.origin:
+        if not grbl_machine.origin_set:
             gui.bottom_bar.message_display('CNC origin has not been set.', 'red')
             return False
         elif not (1 <= input_dict['wa_radius'].value < float('inf')):

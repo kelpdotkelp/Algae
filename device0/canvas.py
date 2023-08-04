@@ -13,8 +13,8 @@ import gui
 import math
 
 from .imaging import Switches
-import cnc.core
-from cnc import *
+from gui.parameter import input_dict
+from . import pygrbl_handler
 
 _init = False
 
@@ -53,7 +53,7 @@ def update() -> None:
     # There has to be a check for the changing of these values.
     if _wa_radius != input_dict['wa_radius'].value \
             or _wa_pad != input_dict['wa_pad'].value \
-            or _target_radius != cnc.core.target_radius:
+            or _target_radius != pygrbl_handler.target_radius:
         _init_draw()
 
     for i in range(0, Switches.PORT_MAX):
@@ -69,7 +69,7 @@ def update() -> None:
 
         gui.tab_home.canvas.itemconfigure(_line_list[i], fill=fill)
 
-    if cnc.core.target_radius > 0:
+    if pygrbl_handler.target_radius > 0:
         gui.tab_home.canvas.itemconfigure(_target, width=2)
     else:
         gui.tab_home.canvas.itemconfigure(_target, width=0)
@@ -123,12 +123,12 @@ def _init_draw(target_x: float = 0, target_y: float = 0) -> None:
 
     if _wa_radius != 0:
         global _target, _target_radius
-        _target_radius = cnc.core.target_radius
+        _target_radius = pygrbl_handler.target_radius
         con = radius * _radius_in / _wa_radius
         x = target_x * con
         y = target_y * con
         _target = _create_circle(centre[0] + x,
-                                 centre[1] - y, radius=cnc.core.target_radius * con,
+                                 centre[1] - y, radius=pygrbl_handler.target_radius * con,
                                  width=2, outline='black', fill='')
 
     _init = True

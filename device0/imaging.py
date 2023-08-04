@@ -146,13 +146,35 @@ class VNA(VisaResource):
             float(self.query('SOURCE1:POWER1? MAX'))
         )
 
+    @staticmethod
+    def format_data_one_sweep(str_points: str, freq_list: list) -> list:
+        """Returns a list that contains lists of the real and imaginary
+        components at each frequency."""
+        float_points = str_points.split(',')
+
+        for i in range(len(float_points)):
+            float_points[i] = float(float_points[i])
+
+        # Check to ensure no data is missing from vna
+        if len(float_points) != 2 * len(freq_list):
+            raise MissingDataException(len(float_points), 2 * len(freq_list))
+
+        measurement_set = [[], []]
+
+        for i in range(len(freq_list)):
+            # measurement_set.append([freq_list[i], float_points[2 * i], float_points[1 + 2 * i]])
+            measurement_set[0].append(float_points[2 * i])  # Real
+            measurement_set[1].append(float_points[1 + 2 * i])  # Imaginary
+
+        return measurement_set
+
 
 class Switches(VisaResource):
     """Commands must be terminated with a semicolon
     Previous software said that trans must be set before refl but
     both orders worked in my tests"""
     PORT_MIN = 1
-    PORT_MAX = 24
+    PORT_MAX = 5
 
     debounce_time = 0.03  # seconds
 
@@ -217,3 +239,16 @@ class SwitchInvalidPortException(Exception):
     def display_message(self) -> None:
         print(f'SwitchInvalidPortException:'
               f'\n\tPort {self.attempted_port} is invalid.')
+
+
+class MissingDataException(Exception):
+    """Raised when the parsed vna data does not match two floats per frequency"""
+
+    def __init__(self, actual_num_count: int, expected_num_count: int):
+        self.actual_num_count = actual_num_count
+        self.expected_num_count = expected_num_count
+
+    def get_message(self) -> str:
+        msg = f'MissingDataException:\n\texpected {self.expected_num_count} floating point numbers' \
+              f'\n\treceived from vna {self.actual_num_count} floating point numbers'
+        return msg

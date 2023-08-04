@@ -25,23 +25,27 @@ Author: Noah Stieler, 2023
 
 import tkinter as tk
 import serial.tools.list_ports
+from datetime import date, datetime
 
 import gui
-from gui.parameter import input_dict
 from gui.button import button_dict
+from gui.parameter import input_dict
 import out
-from cnc import *
 from display_resources import display_resources
-
-from . import data_handler
 from . import canvas
 from .imaging import *
 from .input_validate import input_validate
+import pygrbl
+from . import pygrbl_handler
 
-WORKING_AREA_RADIUS = 120
-WORKING_AREA_PADDING = 20
+abort = False
 
-pos_gen.DIMENSION = 2
+WORKING_AREA_RADIUS = 120  # Default for this device
+WORKING_AREA_PADDING = 20  # Default for this device
+pos_list = []
+pos_index = 0
+
+grbl_machine = None
 
 state = 'idle'
 
@@ -50,12 +54,13 @@ refl_range = (Switches.PORT_MIN, Switches.PORT_MAX)
 port_tran = tran_range[0]
 port_refl = refl_range[0]
 
-vna, switches, cnc = None, None, None
+vna, switches = None, None
 
 
 def main() -> None:
     global port_tran, port_refl
     global state
+    global pos_list, pos_index
 
     gui.core.create_gui()
 
@@ -104,7 +109,7 @@ def main() -> None:
         gui.core.update()
         gui.tab_home.draw_canvas(canvas.update)
 
-        update_target_dim()
+        pygrbl_handler.update_chamber()
 
         # _debug_play_graphics()
 
@@ -125,65 +130,69 @@ def main() -> None:
             # Convert output from string to a list of floats
             for s_parameter in vna.sp_to_measure:
                 try:
-                    vna_output[s_parameter] = data_handler.format_data_one_sweep(vna_output[s_parameter], vna.freq_list)
-                except data_handler.MissingDataException as error:
+                    vna_output[s_parameter] = VNA.format_data_one_sweep(vna_output[s_parameter], vna.freq_list)
+                except MissingDataException as error:
                     gui.bottom_bar.message_display(error.get_message(), 'red')
                     abort_scan()
 
-            # Write to output files
-            for s_parameter in vna.sp_to_measure:
-                data_close = False
-                if port_tran == tran_range[1] and port_refl == refl_range[1] - 1:
-                    data_close = True
+            if not abort:
+                # Write to output files
+                for s_parameter in vna.sp_to_measure:
+                    data_close = False
+                    if port_tran == tran_range[1] and port_refl == refl_range[1] - 1:
+                        data_close = True
 
-                out.out_file_data_write(s_parameter, port_tran, port_refl,
-                                        vna_output[s_parameter][0],
-                                        vna_output[s_parameter][1], data_close)
+                    out.out_file_data_write(s_parameter, port_tran, port_refl,
+                                            vna_output[s_parameter][0],
+                                            vna_output[s_parameter][1], data_close)
 
-            scan_finished = update_ports()
-            update_progress_bar()
+                scan_finished = update_ports()
+                update_progress_bar()
 
-            if scan_finished:
-                state = scan_finished
+                if scan_finished:
+                    state = scan_finished
 
         if state == 'scan_finished':
             for s_parameter in vna.sp_to_measure:
                 out.out_file_complete(s_parameter)
 
-            if cnc.pos_index + 1 >= len(cnc.pos_list):
-                try:
-                    if input_dict['cnc_enable'].value:
-                        cnc.set_position(cnc.pos, Point(0, 0))
-                        canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
-                except CNCException as e:
-                    e.display()
-                    abort_scan()
-                    return
+            # All positions visited
+            if pos_index + 1 >= len(pos_list):
+                if input_dict['cnc_enable'].value:
+                    try:
+                        grbl_machine.set_position(pygrbl.Point(0, 0))
+                        canvas.set_target_pos(0, 0)
+                    except pygrbl.PyGRBLException as e:
+                        pygrbl_handler.pygrbl_exception(e)
+                        abort_scan()
 
                 button_dict['stop'].toggle_state()
 
                 state = 'idle'
+            # Go to next position
             else:
-                # Go to next position
+                pos_index += 1
+                pos = pos_list[pos_index]
+
                 try:
-                    cnc.next_position()
-                    canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
-                except CNCException as e:
-                    e.display()
+                    grbl_machine.set_position(pos)
+                    canvas.set_target_pos(pos.x, pos.y)
+                except pygrbl.PyGRBLException as e:
+                    pygrbl_handler.pygrbl_exception(e)
                     abort_scan()
-                    return
 
-                # Set up new output folder
-                out.mkdir_new_pos()
-                for s_parameter in vna.sp_to_measure:
-                    meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                              cnc.pos.x, cnc.pos.y)
-                    out.out_file_init(s_parameter, meta_dict, vna.freq_list)
+                if not abort:
+                    # Set up new output folder
+                    out.mkdir_new_pos()
+                    for s_parameter in vna.sp_to_measure:
+                        meta_dict = format_meta_data(s_parameter,
+                                                                  pos.x, pos.y)
+                        out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
-                port_tran = tran_range[0]
-                port_refl = refl_range[0]
+                    port_tran = tran_range[0]
+                    port_refl = refl_range[0]
 
-                state = 'scan'
+                    state = 'scan'
 
             gui.bottom_bar.progress_bar_set(0)
 
@@ -216,12 +225,15 @@ def on_button_run() -> None:
     that all user input is valid, and sets up output directory and files.
     Assuming no user errors, state is changed to 'scan'."""
 
+    global abort
+    abort = False
+
     """Check that hardware is connected and ready."""
-    if vna is None or switches is None or cnc is None:
+    if vna is None or switches is None or grbl_machine is None:
         gui.bottom_bar.message_display('Hardware setup failed.', 'red')
         return
 
-    valid = input_validate(vna, cnc)
+    valid = input_validate(vna, grbl_machine)
     if not valid:
         return
 
@@ -229,22 +241,38 @@ def on_button_run() -> None:
 
     """Initialize hardware"""
     vna.initialize()
-    cnc.initialize()
 
-    try:
-        cnc.next_position()
-        canvas.set_target_pos(cnc.pos.x, cnc.pos.y)
-    except CNCException as e:
-        e.display()
-        return
+    """Set up positioning"""
+    pygrbl.set_chamber(pygrbl_handler.chamber)
+
+    global pos_list, pos_index
+    first_pos = pygrbl.Point(0, 0)
+    if input_dict['cnc_enable']:
+        if input_dict['pos_gen_type'].value == 'random uniform 2d':
+            pos_list = pygrbl.ChamberCircle2D.gen_rand_uniform(input_dict['num_pos'].value,
+                                                               pygrbl_handler.chamber.true_radius,
+                                                               order='nearest_neighbour')
+        elif input_dict['pos_gen_type'].value == 'list':
+            pos_list = pygrbl.load_csv(input_dict['pos_list_path'].value, 2)
+
+        first_pos = pos_list[0]
+
+        try:
+            grbl_machine.set_position(first_pos)
+            canvas.set_target_pos(first_pos.x, first_pos.y)
+        except pygrbl.PyGRBLException as e:
+            pygrbl_handler.pygrbl_exception(e)
+            abort_scan()
+            return
+    else:
+        pos_list = []
 
     """Initialize output file structure"""
     out.init_root(input_dict['output_dir'].value, input_dict['output_name'].value)
     out.mkdir_new_pos(first_position=True)
 
     for s_parameter in vna.sp_to_measure:
-        meta_dict = data_handler.format_meta_data(vna, s_parameter,
-                                                  cnc.pos.x, cnc.pos.y)
+        meta_dict = format_meta_data(s_parameter, first_pos.x, first_pos.y)
         out.out_file_init(s_parameter, meta_dict, vna.freq_list)
 
     """Initialize switches"""
@@ -260,6 +288,9 @@ def on_button_run() -> None:
 
 
 def abort_scan() -> None:
+    global abort
+    abort = True
+
     for s_parameter in vna.sp_to_measure:
         out.out_file_complete(s_parameter)
 
@@ -275,7 +306,7 @@ def abort_scan() -> None:
 def on_button_connect() -> None:
     """Opens the vna and switches resources and checks there is a valid
     connection with them."""
-    global vna, switches, cnc
+    global vna, switches, grbl_machine
     valid = [False, False, False]
 
     vna = create_vna(input_dict['address_vna'].value)
@@ -286,8 +317,8 @@ def on_button_connect() -> None:
     if switches is not None:
         valid[1] = True
 
-    cnc = create_cnc(input_dict['address_serial'].value)
-    if cnc is not None:
+    grbl_machine = pygrbl.create_pygrbl_machine(input_dict['address_serial'].value)
+    if grbl_machine is not None:
         valid[2] = True
         button_dict['set_origin'].set_state(1)
     else:
@@ -301,11 +332,11 @@ def on_button_connect() -> None:
 
 
 def update_progress_bar() -> None:
-    if len(cnc.pos_list) == 0:
+    if len(pos_list) == 0:
         return
 
     try:
-        gui.bottom_bar.progress_bar_set(cnc.pos_index / len(cnc.pos_list))
+        gui.bottom_bar.progress_bar_set(pos_index / len(pos_list))
     except tk.TclError:
         pass
 
@@ -322,12 +353,33 @@ def on_button_auto_detect() -> None:
 
 def on_set_origin() -> None:
     try:
-        cnc.set_origin()
-    except CNCException as e:
-        e.display()
+        grbl_machine.set_origin()
+    except pygrbl.PyGRBLException as e:
+        pygrbl_handler.pygrbl_exception(e)
+        abort_scan()
         return
     canvas.set_state_origin(False)
     gui.tab_hardware.set_indicator_origin()
+
+
+def format_meta_data(s_parameter: str, posx: float = 0, posy: float = 0) -> dict:
+    """Returns the correctly structured dictionary that can later
+    be incorporated into JSON format"""
+    out_dict = {
+        's_parameter': s_parameter,
+        'freq_start': input_dict['freq_start'].value,
+        'freq_stop': input_dict['freq_stop'].value,
+        'if_bandwidth': input_dict['ifbw'].value,
+        'num_points': input_dict['num_points'].value,
+        'power': input_dict['power'].value,
+        'posx': posx,
+        'posy': posy,
+        'vna_name': vna.name,
+        'date': str(date.today()),
+        'time': (datetime.now()).strftime('%H:%M:%S'),
+        'description': input_dict['description'].value
+    }
+    return out_dict
 
 
 def _debug_play_graphics() -> None:
