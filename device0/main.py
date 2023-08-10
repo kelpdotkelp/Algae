@@ -247,7 +247,7 @@ def on_button_run() -> None:
 
     global pos_list, pos_index
     first_pos = pygrbl.Point(0, 0)
-    if input_dict['cnc_enable']:
+    if input_dict['cnc_enable'].value:
         if input_dict['pos_gen_type'].value == 'random uniform 2d':
             pos_list = pygrbl.ChamberCircle2D.gen_rand_uniform(input_dict['num_pos'].value,
                                                                pygrbl_handler.chamber.true_radius,
