@@ -56,11 +56,7 @@ interface with.
 
 ### Building
 
-`build.bat` executes a pyinstaller command to compile Algae into an .exe
-which is at `dist/Algae/Algae.exe`.
-
-If needed, pyinstaller can also be run as a Python module. Run:
-`python -m PyInstaller` followed by all the parameters used in `build.bat`.
+`build.bat` runs PyInstaller as a python module with all the needed build options.
 
 ### Documentation
 
