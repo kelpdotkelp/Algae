@@ -377,7 +377,8 @@ def format_meta_data(s_parameter: str, posx: float = 0, posy: float = 0) -> dict
         'vna_name': vna.name,
         'date': str(date.today()),
         'time': (datetime.now()).strftime('%H:%M:%S'),
-        'description': input_dict['description'].value
+        'description': input_dict['description'].value,
+        'rotation': input_dict['rotation'].value
     }
     return out_dict
 

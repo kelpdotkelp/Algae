@@ -201,6 +201,12 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
 
     _optionmenu_position_type('random uniform 2d')
 
+    """ROTATION"""
+    insert_sub_header(_frame_pos_box, 'Orientation')
+    widgets = insert_labeled_entry(_frame_pos_box, ('Rotation (deg)',))
+    input_dict['rotation'] = InputItemNumber(widgets['entry'][0], 'Rotation (deg)', 0)
+    input_dict['rotation'].set('0')
+
 
 def update_pos_enable() -> None:
     try:
