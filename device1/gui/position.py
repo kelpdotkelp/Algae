@@ -12,8 +12,7 @@ from gui import style
 from gui.widgets import *
 from gui.parameter import *
 from gui.button import *
-
-_label_set_origin = None
+import gui.tab_hardware
 
 
 def custom_position_box(_frame_pos_box: tk.Frame):
@@ -21,10 +20,9 @@ def custom_position_box(_frame_pos_box: tk.Frame):
     frame_origin = tk.Frame(_frame_pos_box)
     frame_origin.pack(anchor='w', padx=style.padx_content, pady=style.pady_content)
 
-    global _label_set_origin
-    _label_set_origin = tk.Label(frame_origin, text='',
+    gui.tab_hardware._label_set_origin = tk.Label(frame_origin, text='',
                                  background=_frame_pos_box['background'])
-    _label_set_origin.grid(row=0, column=1, padx=20)
+    gui.tab_hardware._label_set_origin.grid(row=0, column=1, padx=20)
 
     button_so = ttk.Button(frame_origin, text='Set origin')
     button_so.grid(row=0, column=0)

@@ -99,6 +99,7 @@ class VNA(VisaResource):
         self.calibration_list = cal.split(',')
 
     def calibrate(self) -> None:
+        self.resource.timeout = 60 * 1000  # Time in milliseconds
         self.write('SYSTEM:PRESET')
         self.write('SENSE1:CORRECTION:CSET:ACTIVATE \'' + self.calibration + '\', 1')
         self.query('*OPC?')
@@ -107,13 +108,13 @@ class VNA(VisaResource):
         self.write('INITIATE1:IMMEDIATE')
         self.query('*OPC?')
 
-    def save_snp(self, path: str) -> None:
+    def save_snp(self, path: str, file_num: str) -> None:
         """Writes VNA data to a .s24p at path"""
         # Manual wants this for .snp save command
         self.write('SENSE1:CORRECTION:CACHE:MODE 1')
 
         cmd = 'CALCULATE1:MEASURE1:DATA:SNP:PORTS:SAVE'
-        args = f' \'{VNA.port_list}\', \'{path}\\output.s24p\', fast'
+        args = f' \'{VNA.port_list}\', \'{path}\\output_{file_num}.s24p\', fast'
         self.write(cmd + args)
 
         self.query('*OPC?')
