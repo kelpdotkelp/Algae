@@ -2,21 +2,24 @@
 Algae ~ Automated Target Positioning System
 Electromagnetic Imaging Lab, University of Manitoba
 
-Manages VNA state and VNA communication.
+Manages VNA, and controls cartesian robot.
 
 Hardware:
     Keysight M9019A PXIe Chassis Gen3
     Keysight M9037A PXIe High-Performance Embedded Controller
     Keysight M9802A PXI Vector Network Analyzer, 6 Port (x4)
+    Custom GRBL cartesian robot
 
 Author: Noah Stieler, 2023
 """
+import serial.tools.list_ports
+
 from gui.parameter import input_dict
 from gui.button import button_dict
 import out
 from display_resources import display_resources
 from .data_handler import format_meta_data
-from .gui import calibration
+from .gui import calibration, position
 from .imaging import *
 from .input_validate import input_validate
 
@@ -31,7 +34,7 @@ def main() -> None:
     global state
 
     gui.bottom_bar.enable_button_stop = False
-    gui.core.create_gui()
+    gui.core.create_gui(position.custom_position_box)
 
     # Set up input parameters
     input_dict['num_points'] = gui.tab_home.add_parameter_num('Number of points')
@@ -48,11 +51,16 @@ def main() -> None:
     input_dict['address_vna'], button_dict['calibrate'] = \
         gui.tab_hardware.add_hardware('VNA', default_value=VISA_ADDRESS_VNA,
                                       action=True, action_name='Calibrate')
-
     # Set up calibration selection
     button_dict['calibrate'].command(calibration.create_popup)
     button_dict['calibrate'].set_state(0)
     calibration.on_apply_calib = on_apply_calib
+
+    input_dict['address_cnc'], button_dict['auto_detect'] = \
+        gui.tab_hardware.add_hardware('CNC', default_value='',
+                                      action=True, action_name='Auto-detect')
+    button_dict['auto_detect'].command(on_button_auto_detect)
+    button_dict['auto_detect'].set_state(1)
 
     while not gui.core.app_terminated:
         gui.core.update()
@@ -128,3 +136,13 @@ def on_apply_calib() -> None:
     gui.tab_hardware.set_indicator(0, 'Calibrating...', 'blue')
     gui.core.update_during_thread_wait(t)
     gui.tab_hardware.set_indicator(0, 'Calibrated.', 'green')
+
+
+def on_button_auto_detect() -> None:
+    port_list = serial.tools.list_ports.comports()
+
+    if len(port_list) == 0:
+        return
+
+    elif len(port_list) == 1:
+        input_dict['address_cnc'].set(port_list[0].name)

@@ -79,7 +79,7 @@ def add_hardware(display_name: str, default_value: str = '',
         return input_item, button_item
 
 
-def create(frame_content_base: tk.Frame) -> tk.Frame:
+def create(frame_content_base: tk.Frame, custom_position_box) -> tk.Frame:
     frame_page_base = tk.Frame(frame_content_base)
     frame_page_base.rowconfigure(index=0, weight=1)
     frame_page_base.columnconfigure(index=0, weight=1)
@@ -108,12 +108,12 @@ def create(frame_content_base: tk.Frame) -> tk.Frame:
     button_dr.grid(row=0, column=1, padx=15)
     button_dict['disp_res'] = ButtonItem(button_dr)
 
-    _create_positioning(frame_hardware)
+    _create_positioning(frame_hardware, custom_position_box)
 
     return frame_page_base
 
 
-def _create_positioning(frame_hardware: tk.Frame) -> None:
+def _create_positioning(frame_hardware: tk.Frame, custom_position_box) -> None:
     frame_pos_header = tk.Frame(frame_hardware)
     frame_pos_header.pack(anchor='w')
 
@@ -134,6 +134,10 @@ def _create_positioning(frame_hardware: tk.Frame) -> None:
     _frame_pos_box.columnconfigure(index=0, weight=1)
     _frame_pos_box.rowconfigure(index=0, weight=1)
     _frame_pos_box.pack(anchor='w')
+
+    if custom_position_box is not None:
+        custom_position_box(_frame_pos_box)
+        return
 
     """SET ORIGIN"""
     frame_origin = tk.Frame(_frame_pos_box)

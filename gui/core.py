@@ -65,7 +65,7 @@ def _create_window() -> None:
         pass
 
 
-def create_gui() -> None:
+def create_gui(custom_position_box=None) -> None:
     _create_window()
 
     frame_tabs = tk.Frame(_root)
@@ -78,7 +78,7 @@ def create_gui() -> None:
     _tab_control = ttk.Notebook(frame_tabs)
 
     frame_tab_home = tab_home.create(_tab_control)
-    frame_tab_hardware = tab_hardware.create(_tab_control)
+    frame_tab_hardware = tab_hardware.create(_tab_control, custom_position_box)
 
     frame_tab_home.grid_propagate(False)
     frame_tab_hardware.grid_propagate(False)
