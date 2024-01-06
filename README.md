@@ -24,10 +24,10 @@ Both devices use custom `grbl` based cartesian robots.
 
 ### Requirements
 
-All devices require PyVISA and PySerial. Please install it 
-by following the installation guide at:
+All devices require PyVISA, pygrbl, and PySerial.
 
-https://pyvisa.readthedocs.io/en/latest/introduction/getting.html
+PyVISA: https://pyvisa.readthedocs.io/en/latest/introduction/getting.html
+pygrbl: https://github.com/kelpdotkelp/pygrbl
 
 `device0` requires installation of the following National Instruments software:
 
@@ -57,6 +57,9 @@ interface with.
 ### Building
 
 `build.bat` runs PyInstaller as a python module with all the needed build options.
+Building an executable may not work currently, so the best way to use the software is to run:
+
+`python ./Algae/main.py`
 
 ### Documentation
 
